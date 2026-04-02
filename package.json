@@ -1,0 +1,50 @@
+{
+  "name": "gas-delivery-admin-platform",
+  "version": "1.0.0",
+  "description": "Production-ready admin dashboard and backend for a gas delivery platform",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development nodemon src/server.js",
+    "build": "next build",
+    "start": "cross-env NODE_ENV=production node src/server.js"
+  },
+  "keywords": [
+    "nextjs",
+    "react",
+    "tailwindcss",
+    "express",
+    "postgresql",
+    "socket.io",
+    "docker",
+    "gas-delivery"
+  ],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "axios": "^1.8.2",
+    "body-parser": "^1.20.3",
+    "clsx": "^2.1.1",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "lucide-react": "^0.474.0",
+    "next": "^15.2.0",
+    "pg": "^8.13.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.5.2",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "nodemon": "^3.1.7",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17"
+  }
+}

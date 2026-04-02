@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>خريطة مشروع توصيل الغاز</title>
+    <link rel="stylesheet" href="./project-map.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero__content">
+          <p class="eyebrow">تحليل تنفيذي وتقني</p>
+          <h1>خريطة مشروع توصيل وطلبات الغاز</h1>
+          <p class="hero__summary">
+            هذه الصفحة مبنية بعد مراجعة الملفات الفعلية داخل المستودع الحالي. الهدف
+            منها توضيح ما الذي تم بناؤه، ما الذي ما زال ناقصًا، كيف ترتبط الأجزاء
+            ببعضها، وما هي الخطة القادمة من واجهات المستخدم حتى الباكند وقاعدة
+            البيانات والتشغيل.
+          </p>
+          <div class="hero__badges">
+            <span class="badge badge--good">لوحة إدارة حيّة</span>
+            <span class="badge badge--good">API + Socket.IO</span>
+            <span class="badge badge--good">PostgreSQL + Docker</span>
+            <span class="badge badge--warn">Driver App شبه مكتمل</span>
+            <span class="badge badge--missing">Customer App غير موجود هنا</span>
+          </div>
+        </div>
+
+        <aside class="hero__panel">
+          <div class="hero-card">
+            <p class="hero-card__label">الحكم السريع</p>
+            <p class="hero-card__value">النواة التشغيلية موجودة</p>
+            <p class="hero-card__text">
+              المستودع يحتوي اليوم على لوحة إدارة فعلية، API متعدد المسارات، قاعدة
+              بيانات PostgreSQL، بث لحظي عبر Socket.IO، وتطبيق سائق Flutter يعمل
+              على نفس المنظومة. النواقص الأساسية قبل الإنتاج هي: مصادقة الأدمن،
+              اختبارات، migrations، إشعارات حقيقية، وإدخال تطبيق العميل إلى نفس
+              الخريطة.
+            </p>
+          </div>
+        </aside>
+      </header>
+
+      <main class="content">
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">ملخص الحالة</p>
+            <h2>ما الذي وجدناه داخل المستودع الحالي</h2>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric-card">
+              <span class="metric-card__value">6</span>
+              <h3>صفحات إدارة رئيسية</h3>
+              <p>Dashboard, Orders, Drivers, Users, Pricing, Zones, Settings.</p>
+            </article>
+            <article class="metric-card">
+              <span class="metric-card__value">9</span>
+              <h3>مجموعات API</h3>
+              <p>Auth, Driver Auth, Driver App, Orders, Drivers, Customers, Settings, Products, Zones.</p>
+            </article>
+            <article class="metric-card">
+              <span class="metric-card__value">7</span>
+              <h3>جداول أساسية</h3>
+              <p>customers, drivers, orders, driver_order_rejections, system_settings, gas_products, delivery_zones.</p>
+            </article>
+            <article class="metric-card">
+              <span class="metric-card__value">3</span>
+              <h3>خدمات Docker</h3>
+              <p>backend, postgres, pgAdmin داخل ملف تشغيل واحد.</p>
+            </article>
+          </div>
+
+          <div class="status-grid">
+            <article class="status-card">
+              <div class="status-card__head">
+                <h3>منجز فعليًا</h3>
+                <span class="status-pill status-pill--good">جاهز للعمل المحلي</span>
+              </div>
+              <ul class="feature-list">
+                <li>خادم واحد يشغّل Next.js و Express و Socket.IO معًا.</li>
+                <li>لوحة إدارة ثنائية اللغة عربية/إنجليزية ببيانات فعلية.</li>
+                <li>إدارة الطلبات والسائقين والعملاء والتسعير والمناطق والإعدادات.</li>
+                <li>تطبيق سائق Flutter مرتبط بالـ API وبالأحداث اللحظية.</li>
+                <li>قاعدة بيانات PostgreSQL مع إنشاء جداول و seed data تلقائيًا.</li>
+              </ul>
+            </article>
+
+            <article class="status-card">
+              <div class="status-card__head">
+                <h3>جزئي أو يحتاج إنهاء</h3>
+                <span class="status-pill status-pill--warn">ليس جاهزًا للإنتاج</span>
+              </div>
+              <ul class="feature-list">
+                <li>لا توجد مصادقة أدمن حقيقية للوحة التحكم حتى الآن.</li>
+                <li>تسجيل السائق من التطبيق يظهر في الواجهة لكن الباكند يمنعه.</li>
+                <li>الإشعارات push مجهزة بنيويًا فقط وتحتاج Firebase.</li>
+                <li>الخريطة في التتبع ترسم خطًا مباشرًا لا مسار طرق فعلي.</li>
+                <li>لا توجد اختبارات آلية أو migrations منظمة.</li>
+              </ul>
+            </article>
+
+            <article class="status-card">
+              <div class="status-card__head">
+                <h3>غير موجود داخل هذا الريبو</h3>
+                <span class="status-pill status-pill--missing">مهم جدًا</span>
+              </div>
+              <ul class="feature-list">
+                <li>لم أجد تطبيق العميل داخل هذا المستودع الحالي.</li>
+                <li>لا يوجد نظام CI/CD أو مراقبة تشغيلية أو نسخ احتياطي واضح.</li>
+                <li>لا توجد طبقة صلاحيات roles/rbac للإدارة.</li>
+                <li>لا يوجد فصل بيئات واضح للتطوير والـ staging والإنتاج.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section section--accent">
+          <div class="section__header">
+            <p class="section__eyebrow">خريطة المنظومة</p>
+            <h2>كيف ترتبط الأجزاء ببعضها</h2>
+            <p class="section__lead">
+              هذه الخريطة تعكس ما هو موجود الآن، مع تمييز الجزء المفقود أو المخطط له
+              مستقبلًا.
+            </p>
+          </div>
+
+          <div class="architecture">
+            <article class="architecture-card architecture-card--planned">
+              <span class="architecture-card__tag">مخطط له</span>
+              <h3>تطبيق العميل</h3>
+              <p>
+                غير موجود داخل هذا الريبو، لكنه عنصر أساسي متوقع لإرسال الطلبات
+                وتتبعها من جهة العميل.
+              </p>
+            </article>
+
+            <div class="architecture__arrow">←</div>
+
+            <article class="architecture-card">
+              <span class="architecture-card__tag">Frontend</span>
+              <h3>لوحة الإدارة</h3>
+              <p>
+                Next.js App Router + React + Tailwind. تتصل بالـ API وتستقبل
+                الأحداث اللحظية عبر Socket.IO.
+              </p>
+            </article>
+
+            <div class="architecture__arrow">←</div>
+
+            <article class="architecture-card architecture-card--core">
+              <span class="architecture-card__tag">Core</span>
+              <h3>Express API + Socket.IO</h3>
+              <p>
+                مسارات الطلبات والسائقين والعملاء والإعدادات والمنتجات والمناطق،
+                مع بث لحظي للتحديثات.
+              </p>
+            </article>
+
+            <div class="architecture__arrow">↔</div>
+
+            <article class="architecture-card">
+              <span class="architecture-card__tag">Mobile</span>
+              <h3>Driver App</h3>
+              <p>
+                Flutter + Riverpod + Dio + Socket.IO + Google Maps. يدير
+                الطلبات المتاحة والنشطة والتتبع والملف الشخصي.
+              </p>
+            </article>
+
+            <div class="architecture__arrow">←</div>
+
+            <article class="architecture-card">
+              <span class="architecture-card__tag">Data</span>
+              <h3>PostgreSQL</h3>
+              <p>
+                تخزين العملاء والسائقين والطلبات والإعدادات والتسعير ومناطق
+                التوصيل، مع seed data أولية.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">ما الذي سويناه</p>
+            <h2>الأعمال المنفذة حتى الآن حسب الطبقة</h2>
+          </div>
+
+          <div class="cards-grid">
+            <article class="detail-card">
+              <h3>1. الفرونت الإداري</h3>
+              <ul class="feature-list">
+                <li>بناء Dashboard أساسي يعرض الطلبات، السائقين، والإحصائيات التشغيلية.</li>
+                <li>صفحات تفصيلية للطلبات والسائقين والعملاء والأسعار والمناطق والإعدادات.</li>
+                <li>ربط الواجهة مع Axios normalizers بدل الاعتماد على mock UI فقط.</li>
+                <li>إضافة دعم اللغة العربية والإنجليزية وتبديل الاتجاه RTL/LTR.</li>
+                <li>إضافة cache محلي fallback لبعض البيانات داخل المتصفح.</li>
+              </ul>
+            </article>
+
+            <article class="detail-card">
+              <h3>2. الباكند</h3>
+              <ul class="feature-list">
+                <li>تشغيل Express وNext داخل نفس السيرفر.</li>
+                <li>إضافة مسارات للعملاء والسائقين والطلبات والإعدادات والمنتجات والمناطق.</li>
+                <li>دعم auth مبني على session token للعملاء والسائقين.</li>
+                <li>إدارة انتقالات حالة الطلب وحالة السائق والتحقق من بعض القيود التشغيلية.</li>
+                <li>إرسال أحداث realtime مثل new_order وorder_updated وdriver_updated.</li>
+              </ul>
+            </article>
+
+            <article class="detail-card">
+              <h3>3. قاعدة البيانات</h3>
+              <ul class="feature-list">
+                <li>إنشاء الجداول الأساسية والعلاقات بين الطلبات والعملاء والسائقين.</li>
+                <li>إضافة فهارس أساسية لتحسين الاستعلامات المهمة.</li>
+                <li>إضافة seed data للإعدادات والمنتجات ومناطق التوصيل.</li>
+                <li>دعم تعديلات schema تدريجية عبر ALTER TABLE داخل initialization.</li>
+                <li>تخزين إحداثيات العميل والسائق ومراحل التوصيل داخل الطلب.</li>
+              </ul>
+            </article>
+
+            <article class="detail-card">
+              <h3>4. تطبيق السائق</h3>
+              <ul class="feature-list">
+                <li>شاشة Splash ثم تسجيل دخول وربط session storage وsocket connection.</li>
+                <li>Home تعرض dashboard سريع، أرباح اليوم، الطلبات المتاحة والنشطة.</li>
+                <li>Orders فيها Available وActive وHistory والبحث والقبول والرفض.</li>
+                <li>Active Delivery فيها خريطة، مكالمة العميل، الملاحة، وتحديث مرحلة التسليم.</li>
+                <li>Profile وNotifications وEarnings موجودة ومتصلة بالـ backend.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">خريطة الملفات</p>
+            <h2>المجلدات والمسؤوليات داخل المشروع</h2>
+          </div>
+
+          <div class="code-grid">
+            <article class="code-card">
+              <h3><code>app/</code></h3>
+              <p>صفحات Next.js App Router الخاصة بلوحة الإدارة.</p>
+            </article>
+            <article class="code-card">
+              <h3><code>components/</code></h3>
+              <p>مكونات الواجهة، الجداول، النماذج، المزودات، وshell العام.</p>
+            </article>
+            <article class="code-card">
+              <h3><code>services/</code></h3>
+              <p>طبقة الاتصال بالـ API وSocket.IO للفرونت الإداري.</p>
+            </article>
+            <article class="code-card">
+              <h3><code>src/</code></h3>
+              <p>Express app, server bootstrap, routes, controllers, models, middleware.</p>
+            </article>
+            <article class="code-card">
+              <h3><code>database/</code></h3>
+              <p>تهيئة PostgreSQL الأولية والـ seed data.</p>
+            </article>
+            <article class="code-card">
+              <h3><code>apps/driver_app/</code></h3>
+              <p>تطبيق السائق Flutter بكل طبقاته: auth, home, orders, tracking, profile.</p>
+            </article>
+            <article class="code-card">
+              <h3><code>data/</code></h3>
+              <p>ترجمات الواجهة وبعض mock data القديمة التي تحتاج تنظيفًا أو حذفًا.</p>
+            </article>
+            <article class="code-card">
+              <h3><code>docker-compose.yml</code></h3>
+              <p>تشغيل backend وpostgres وpgAdmin محليًا.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section section--accent">
+          <div class="section__header">
+            <p class="section__eyebrow">اللغات والتقنيات</p>
+            <h2>ما هي لغات البرمجة والأدوات المستخدمة</h2>
+          </div>
+
+          <div class="stack-grid">
+            <article class="stack-card">
+              <h3>Frontend Admin</h3>
+              <p>JavaScript, JSX, Next.js 15, React 19, Tailwind CSS, Axios, Socket.IO Client, Lucide.</p>
+            </article>
+            <article class="stack-card">
+              <h3>Backend</h3>
+              <p>Node.js 20, Express 4, pg, Socket.IO, body-parser, cors, dotenv.</p>
+            </article>
+            <article class="stack-card">
+              <h3>Mobile Driver App</h3>
+              <p>Dart, Flutter, Riverpod, Dio, Flutter Secure Storage, Geolocator, Google Maps, socket_io_client.</p>
+            </article>
+            <article class="stack-card">
+              <h3>Data & Infra</h3>
+              <p>SQL, PostgreSQL 16, Docker, Docker Compose, pgAdmin, YAML, Dockerfile.</p>
+            </article>
+            <article class="stack-card">
+              <h3>Static Docs</h3>
+              <p>HTML + CSS لصفحات التوثيق والتقارير الموجودة في جذر المشروع.</p>
+            </article>
+            <article class="stack-card">
+              <h3>منصات Flutter</h3>
+              <p>يوجد أيضًا Kotlin/Swift/C++ كملفات منصة تلقائية لمشروع Flutter، لكن منطق التطبيق الأساسي مكتوب بـ Dart.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">الفجوات الحالية</p>
+            <h2>ما الذي يجب الانتباه له الآن</h2>
+          </div>
+
+          <div class="warning-list">
+            <article class="warning-card">
+              <h3>1. لا يوجد Admin Auth فعلي</h3>
+              <p>
+                لوحة الإدارة تفتح مباشرة، بينما نظام المصادقة الموجود حاليًا يغطي
+                العملاء والسائقين فقط. هذه أكبر فجوة أمنية قبل أي نشر خارجي.
+              </p>
+            </article>
+            <article class="warning-card">
+              <h3>2. تضارب بين UI السائق وسياسة الباكند</h3>
+              <p>
+                واجهة السائق تعرض إنشاء حساب، لكن endpoint التسجيل يرجّع منعًا صريحًا
+                ويقول إن الحساب يجب أن ينشأ من لوحة الإدارة فقط.
+              </p>
+            </article>
+            <article class="warning-card">
+              <h3>3. لا توجد اختبارات أو CI</h3>
+              <p>
+                لا يوجد test suite واضح في الويب أو الباكند أو Flutter، ولا pipeline
+                للتحقق الآلي من البناء والجودة.
+              </p>
+            </article>
+            <article class="warning-card">
+              <h3>4. التهيئة الحالية ليست بديلًا عن migrations</h3>
+              <p>
+                الاعتماد على initializeDatabase جيد كبداية، لكنه ليس بديلاً عن
+                migrations قابلة للتتبع عند تطور النظام.
+              </p>
+            </article>
+            <article class="warning-card">
+              <h3>5. الإشعارات والخرائط لم تكتمل إنتاجيًا</h3>
+              <p>
+                إشعارات Firebase ما زالت TODO، ومسار التوصيل على الخريطة ليس routing
+                engine حقيقيًا حتى الآن.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">صفحة الأدمن</p>
+            <h2>ماذا تحتاج صفحة الأدمن حتى تصبح مكتملة</h2>
+            <p class="section__lead">
+              لوحة الإدارة الحالية قوية من ناحية العرض والتشغيل اليومي، لكن حتى تصبح
+              صفحة أدمن مكتملة فعلًا فهي تحتاج طبقة إدارة حقيقية، وليس فقط واجهة
+              جميلة مرتبطة بالبيانات.
+            </p>
+          </div>
+
+          <div class="admin-needs-grid">
+            <article class="detail-card">
+              <h3>1. الأمان والصلاحيات</h3>
+              <ul class="feature-list">
+                <li>تسجيل دخول أدمن حقيقي بدل الدخول المباشر إلى اللوحة.</li>
+                <li>أدوار وصلاحيات واضحة مثل super admin وoperator وsupport.</li>
+                <li>حماية المسارات الإدارية من الوصول غير المصرح.</li>
+                <li>جلسات آمنة وتسجيل خروج فعلي وإدارة صلاحية الجلسة.</li>
+              </ul>
+            </article>
+
+            <article class="detail-card">
+              <h3>2. إدارة تشغيل أعمق</h3>
+              <ul class="feature-list">
+                <li>تعيين السائقين للطلبات بشكل أوضح وأسرع من شاشة واحدة.</li>
+                <li>عرض خريطة تشغيلية للأوامر والسائقين بدل الجداول فقط.</li>
+                <li>فلترة أقوى حسب المنطقة والسائق والحالة والوقت.</li>
+                <li>مركز تنبيهات إداري للطلبات الجديدة والمشاكل والتأخير.</li>
+              </ul>
+            </article>
+
+            <article class="detail-card">
+              <h3>3. إدارة المستخدمين والسائقين</h3>
+              <ul class="feature-list">
+                <li>عرض بيانات السائق مع آخر ظهور وآخر موقع وسجل الطلبات.</li>
+                <li>إيقاف أو تفعيل السائق أو العميل من لوحة الإدارة.</li>
+                <li>إعادة تعيين كلمات المرور وإدارة الحسابات من مكان مركزي.</li>
+                <li>حل التناقض الحالي بين إنشاء السائق من التطبيق وإنشائه من الأدمن فقط.</li>
+              </ul>
+            </article>
+
+            <article class="detail-card">
+              <h3>4. التقارير والرقابة</h3>
+              <ul class="feature-list">
+                <li>تقارير يومية وأسبوعية عن الطلبات والإيرادات وأداء السائقين.</li>
+                <li>سجل عمليات audit log يوضح من غيّر ماذا ومتى.</li>
+                <li>لوحة KPI أوضح للإدارة العليا.</li>
+                <li>تصدير CSV أو Excel للطلبات والعملاء والسائقين.</li>
+              </ul>
+            </article>
+
+            <article class="detail-card">
+              <h3>5. الاستقرار والجودة</h3>
+              <ul class="feature-list">
+                <li>validation موحد لكل النماذج الإدارية.</li>
+                <li>رسائل خطأ أوضح وتجربة أفضل عند تعطل الـ backend.</li>
+                <li>اختبارات للعمليات الحرجة مثل تحديث الطلب وتغيير السائق.</li>
+                <li>مراقبة تشغيلية logging وmonitoring داخل بيئة الإنتاج.</li>
+              </ul>
+            </article>
+
+            <article class="detail-card">
+              <h3>6. الترتيب المقترح للأدمن</h3>
+              <ul class="feature-list">
+                <li>أولًا: Admin Auth + Roles + حماية المسارات.</li>
+                <li>ثانيًا: Dispatch center وخريطة تشغيلية وتنبيهات حية.</li>
+                <li>ثالثًا: Audit log وتقارير وتصدير البيانات.</li>
+                <li>رابعًا: تحسينات UX واختبارات واستقرار إنتاجي.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section section--accent">
+          <div class="section__header">
+            <p class="section__eyebrow">الخطة الكاملة</p>
+            <h2>الترتيب المقترح للمرحلة القادمة</h2>
+            <p class="section__lead">
+              هذه الخطة مرتبة بحسب الأولوية العملية: ما يجب تثبيته أولًا، ثم ما يكمل
+              المنتج، ثم ما يجعله جاهزًا للإنتاج الحقيقي.
+            </p>
+          </div>
+
+          <div class="roadmap-grid">
+            <article class="roadmap-card">
+              <span class="roadmap-card__step">المرحلة 1</span>
+              <h3>تثبيت الأساس الحالي</h3>
+              <ul class="feature-list">
+                <li>إضافة تسجيل دخول أدمن حقيقي وصلاحيات إدارية واضحة.</li>
+                <li>حسم سياسة حسابات السائق: إما حذف شاشة التسجيل أو فتح endpoint مناسب.</li>
+                <li>تنظيف ملفات mock القديمة غير المستخدمة.</li>
+                <li>إضافة validation موحد للـ request payloads.</li>
+                <li>إضافة ملف API contract أو OpenAPI مبسط للمسارات الحالية.</li>
+              </ul>
+            </article>
+
+            <article class="roadmap-card">
+              <span class="roadmap-card__step">المرحلة 2</span>
+              <h3>إكمال المنتج الوظيفي</h3>
+              <ul class="feature-list">
+                <li>إدخال تطبيق العميل إلى نفس المستودع أو ربطه رسميًا كمشروع مرافق.</li>
+                <li>ربط الإشعارات push فعليًا عبر Firebase للسائق وربما العميل لاحقًا.</li>
+                <li>استبدال polyline المباشر بمسار حقيقي عبر خدمة خرائط/Routing.</li>
+                <li>إضافة إدارة مهام dispatch أعمق داخل لوحة الإدارة.</li>
+                <li>إضافة تقارير تشغيلية يومية/أسبوعية وإحصاءات مالية أوضح.</li>
+              </ul>
+            </article>
+
+            <article class="roadmap-card">
+              <span class="roadmap-card__step">المرحلة 3</span>
+              <h3>جاهزية الإنتاج</h3>
+              <ul class="feature-list">
+                <li>إضافة migrations رسمية ونسخ احتياطي وقواعد rollback.</li>
+                <li>إضافة اختبارات unit/integration/e2e للويب والباكند وFlutter.</li>
+                <li>إعداد CI/CD وبناء منفصل لكل بيئة.</li>
+                <li>إضافة logging, monitoring, rate limiting, audit trail.</li>
+                <li>فصل إعدادات التطوير عن staging والإنتاج وتوثيق النشر بالكامل.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section summary-box">
+          <div class="section__header">
+            <p class="section__eyebrow">الخلاصة</p>
+            <h2>الخريطة النهائية للمشروع حاليًا</h2>
+          </div>
+
+          <p class="summary-text">
+            المشروع اليوم ليس مجرد فكرة أو واجهات أولية. لدينا بالفعل منصة تشغيل
+            متصلة من لوحة الإدارة حتى قاعدة البيانات وتطبيق السائق. الجزء الأهم
+            التالي ليس بناء كل شيء من جديد، بل تثبيت ما هو موجود: تأمين لوحة الإدارة،
+            حل التناقضات بين الواجهات والـ API، إضافة الاختبارات، ثم إدخال تطبيق
+            العميل وإكمال عناصر الإنتاج.
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+  </html>

@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --font-app: var(--font-cairo);
+  }
+
+  * {
+    @apply border-slate-200;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html[lang="en"] {
+    --font-app: var(--font-jakarta);
+  }
+
+  html[data-locale-switching="true"] *,
+  html[data-locale-switching="true"] *::before,
+  html[data-locale-switching="true"] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  body {
+    @apply min-h-screen bg-slate-100 font-sans text-slate-900 antialiased;
+    background-image:
+      radial-gradient(circle at top right, rgba(255, 156, 60, 0.2), transparent 22%),
+      radial-gradient(circle at top left, rgba(23, 173, 143, 0.12), transparent 28%),
+      radial-gradient(circle at 75% 85%, rgba(15, 23, 42, 0.06), transparent 24%),
+      linear-gradient(180deg, #fcfdff 0%, #f2f5fb 100%);
+    text-rendering: optimizeLegibility;
+    transition:
+      background-color 180ms ease,
+      color 180ms ease;
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .panel-surface {
+    @apply rounded-[28px] border border-white/80 bg-white/85 shadow-panel backdrop-blur-xl;
+    background-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(255, 255, 255, 0.82) 100%
+    );
+    box-shadow:
+      0 28px 70px -38px rgba(15, 23, 42, 0.28),
+      0 12px 30px -24px rgba(255, 124, 31, 0.18);
+    transition:
+      border-color 180ms ease,
+      box-shadow 220ms ease,
+      background-color 180ms ease;
+  }
+
+  .panel-surface-dark {
+    @apply rounded-[30px] border border-slate-800/40 bg-slate-950 text-white shadow-panel;
+    background-image: linear-gradient(
+      180deg,
+      rgba(2, 6, 23, 0.95) 0%,
+      rgba(15, 23, 42, 0.96) 100%
+    );
+    box-shadow:
+      0 34px 70px -30px rgba(2, 6, 23, 0.48),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    transition:
+      border-color 180ms ease,
+      box-shadow 220ms ease,
+      background-color 180ms ease;
+  }
+
+  .input-premium {
+    @apply h-12 w-full rounded-2xl border border-slate-200 bg-white/90 px-4 text-sm text-slate-900 outline-none transition duration-200 placeholder:text-slate-400 focus:border-brand-300 focus:ring-4 focus:ring-brand-100;
+  }
+
+  .select-premium {
+    @apply h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-white/90 px-4 text-sm text-slate-900 outline-none transition duration-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100;
+  }
+
+  .button-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-500 px-4 py-3 text-sm font-semibold text-white shadow-glow transition duration-200 hover:-translate-y-0.5 hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100;
+  }
+
+  .button-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100;
+  }
+
+  .soft-divider {
+    @apply border-t border-slate-100;
+  }
+
+  .eyebrow-label {
+    @apply text-xs font-semibold text-slate-400;
+  }
+
+  .numeric-ltr {
+    direction: ltr;
+    unicode-bidi: plaintext;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+[dir="ltr"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+[dir="ltr"] .eyebrow-label {
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+[dir="rtl"] .eyebrow-label {
+  letter-spacing: 0.08em;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
