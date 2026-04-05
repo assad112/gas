@@ -10,11 +10,11 @@ class AuthState {
   });
 
   const AuthState.initial()
-      : isLoading = false,
-        hasBootstrapped = false,
-        token = null,
-        driver = null,
-        errorMessage = null;
+    : isLoading = false,
+      hasBootstrapped = false,
+      token = null,
+      driver = null,
+      errorMessage = null;
 
   final bool isLoading;
   final bool hasBootstrapped;

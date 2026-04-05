@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final profileControllerProvider =
     AsyncNotifierProvider<ProfileController, DriverProfile>(
-  ProfileController.new,
-);
+      ProfileController.new,
+    );
 
 class ProfileController extends AsyncNotifier<DriverProfile> {
   @override
@@ -17,18 +17,24 @@ class ProfileController extends AsyncNotifier<DriverProfile> {
   Future<void> refresh() async {
     final profile = await ref.read(profileRepositoryProvider).fetchProfile();
     state = AsyncData(profile);
-    await ref.read(authControllerProvider.notifier).updateDriverLocally(profile);
+    await ref
+        .read(authControllerProvider.notifier)
+        .updateDriverLocally(profile);
   }
 
   Future<void> setAvailability({
     required bool online,
     required bool busy,
   }) async {
-    final profile = await ref.read(profileRepositoryProvider).updateAvailability(
+    final profile = await ref
+        .read(profileRepositoryProvider)
+        .updateAvailability(
           status: online ? 'online' : 'offline',
           availability: busy ? 'busy' : 'available',
         );
     state = AsyncData(profile);
-    await ref.read(authControllerProvider.notifier).updateDriverLocally(profile);
+    await ref
+        .read(authControllerProvider.notifier)
+        .updateDriverLocally(profile);
   }
 }

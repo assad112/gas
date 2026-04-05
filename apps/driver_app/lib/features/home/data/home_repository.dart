@@ -13,7 +13,10 @@ class HomeRepository {
   final Dio _dio;
 
   Future<DriverDashboardData> fetchDashboard() async {
-    final response = await _dio.get<Map<String, dynamic>>('/driver/dashboard');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/driver/dashboard',
+      queryParameters: const {'includeTracking': false},
+    );
     return DriverDashboardData.fromJson(response.data ?? const {});
   }
 }

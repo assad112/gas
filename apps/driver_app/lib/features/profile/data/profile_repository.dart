@@ -26,10 +26,7 @@ class ProfileRepository {
   }) async {
     final response = await _dio.patch<Map<String, dynamic>>(
       '/driver/availability',
-      data: {
-        'status': status,
-        'availability': availability,
-      },
+      data: {'status': status, 'availability': availability},
     );
     final payload = Map<String, dynamic>.from(
       response.data?['driver'] as Map? ?? const {},

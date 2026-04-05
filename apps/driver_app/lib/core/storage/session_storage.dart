@@ -13,6 +13,7 @@ class SessionStorage {
 
   static const _tokenKey = 'driver_auth_token';
   static const _driverKey = 'driver_profile_cache';
+  static const _localeKey = 'driver_app_locale';
 
   final FlutterSecureStorage _storage;
 
@@ -37,6 +38,14 @@ class SessionStorage {
 
     final json = jsonDecode(rawValue) as Map<String, dynamic>;
     return DriverProfile.fromJson(json);
+  }
+
+  Future<void> saveLocaleCode(String localeCode) {
+    return _storage.write(key: _localeKey, value: localeCode);
+  }
+
+  Future<String?> readLocaleCode() {
+    return _storage.read(key: _localeKey);
   }
 
   Future<void> clear() async {

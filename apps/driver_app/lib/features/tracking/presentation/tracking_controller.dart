@@ -17,10 +17,10 @@ class TrackingState {
   });
 
   const TrackingState.initial()
-      : isSharing = false,
-        activeOrderId = null,
-        currentPosition = null,
-        errorMessage = null;
+    : isSharing = false,
+      activeOrderId = null,
+      currentPosition = null,
+      errorMessage = null;
 
   final bool isSharing;
   final String? activeOrderId;
@@ -45,22 +45,60 @@ class TrackingState {
 }
 
 class TrackingController extends Notifier<TrackingState> {
+  static const locationPermissionRequiredCode = 'location_permission_required';
+  static const locationServiceDisabledCode = 'location_service_disabled';
+  static const locationPermissionDeniedForeverCode =
+      'location_permission_denied_forever';
+
   StreamSubscription<Position>? _positionSubscription;
+  Position? _lastSentPosition;
+  DateTime? _lastSentAt;
+  bool _isSendingLocation = false;
+  Position? _queuedPosition;
+  bool _isDisposed = false;
+  int _sharingSessionId = 0;
 
   @override
   TrackingState build() {
-    ref.onDispose(() => _positionSubscription?.cancel());
+    ref.onDispose(() {
+      _isDisposed = true;
+      _sharingSessionId += 1;
+      _positionSubscription?.cancel();
+      _positionSubscription = null;
+    });
     return const TrackingState.initial();
   }
 
   Future<void> startSharing(String orderId) async {
+    final sessionId = ++_sharingSessionId;
     final locationService = ref.read(locationServiceProvider);
+    final permissionResult = await locationService.ensurePermission();
+
+    if (!_isSessionActive(sessionId)) {
+      return;
+    }
+
+    if (!permissionResult.isGranted) {
+      state = state.copyWith(
+        errorMessage: switch (permissionResult.status) {
+          LocationPermissionStatus.serviceDisabled =>
+            locationServiceDisabledCode,
+          LocationPermissionStatus.deniedForever =>
+            locationPermissionDeniedForeverCode,
+          _ => locationPermissionRequiredCode,
+        },
+      );
+      return;
+    }
+
     final currentPosition = await locationService.getCurrentPosition();
 
+    if (!_isSessionActive(sessionId)) {
+      return;
+    }
+
     if (currentPosition == null) {
-      state = state.copyWith(
-        errorMessage: 'Location permission is required to share live tracking.',
-      );
+      state = state.copyWith(errorMessage: locationPermissionRequiredCode);
       return;
     }
 
@@ -73,29 +111,137 @@ class TrackingController extends Notifier<TrackingState> {
       clearError: true,
     );
 
-    await _pushPosition(currentPosition);
+    await _sendOrQueuePosition(
+      currentPosition,
+      force: true,
+      sessionId: sessionId,
+    );
 
     _positionSubscription = locationService.watchPosition().listen(
       (position) async {
+        if (!_isSessionActive(sessionId)) {
+          return;
+        }
         state = state.copyWith(currentPosition: position);
-        await _pushPosition(position);
+        await _sendOrQueuePosition(position, sessionId: sessionId);
       },
       onError: (Object error) {
+        if (!_isSessionActive(sessionId)) {
+          return;
+        }
         state = state.copyWith(errorMessage: error.toString());
       },
     );
   }
 
   Future<void> stopSharing() async {
-    await _positionSubscription?.cancel();
+    _sharingSessionId += 1;
+    final currentSubscription = _positionSubscription;
     _positionSubscription = null;
-    state = state.copyWith(isSharing: false, clearOrder: true, clearError: true);
+    await currentSubscription?.cancel();
+    _positionSubscription = null;
+    _lastSentPosition = null;
+    _lastSentAt = null;
+    _queuedPosition = null;
+    _isSendingLocation = false;
+
+    if (_isDisposed) {
+      return;
+    }
+
+    state = state.copyWith(
+      isSharing: false,
+      clearOrder: true,
+      clearError: true,
+    );
+  }
+
+  Future<void> _sendOrQueuePosition(
+    Position position, {
+    bool force = false,
+    required int sessionId,
+  }) async {
+    if (!_isSessionActive(sessionId)) {
+      return;
+    }
+
+    if (!force && !_shouldSendPosition(position)) {
+      return;
+    }
+
+    if (_isSendingLocation) {
+      _queuedPosition = position;
+      return;
+    }
+
+    _isSendingLocation = true;
+    try {
+      await _pushPosition(position);
+      if (!_isSessionActive(sessionId)) {
+        return;
+      }
+      _lastSentPosition = position;
+      _lastSentAt = DateTime.now();
+    } catch (error) {
+      if (!_isSessionActive(sessionId)) {
+        return;
+      }
+      state = state.copyWith(errorMessage: error.toString());
+    } finally {
+      _isSendingLocation = false;
+    }
+
+    final queuedPosition = _queuedPosition;
+    if (!_isSessionActive(sessionId)) {
+      _queuedPosition = null;
+      return;
+    }
+
+    if (queuedPosition != null && !identical(queuedPosition, position)) {
+      _queuedPosition = null;
+      await _sendOrQueuePosition(
+        queuedPosition,
+        force: true,
+        sessionId: sessionId,
+      );
+    } else {
+      _queuedPosition = null;
+    }
+  }
+
+  bool _isSessionActive(int sessionId) {
+    return !_isDisposed && sessionId == _sharingSessionId;
+  }
+
+  bool _shouldSendPosition(Position position) {
+    final lastSentPosition = _lastSentPosition;
+    final lastSentAt = _lastSentAt;
+
+    if (lastSentPosition == null || lastSentAt == null) {
+      return true;
+    }
+
+    final distanceMeters = Geolocator.distanceBetween(
+      lastSentPosition.latitude,
+      lastSentPosition.longitude,
+      position.latitude,
+      position.longitude,
+    );
+
+    final secondsSinceLastPush = DateTime.now()
+        .difference(lastSentAt)
+        .inSeconds;
+
+    return distanceMeters >= 25 || secondsSinceLastPush >= 15;
   }
 
   Future<void> _pushPosition(Position position) {
-    return ref.read(ordersRepositoryProvider).updateDriverLocation(
+    return ref
+        .read(ordersRepositoryProvider)
+        .updateDriverLocation(
           latitude: position.latitude,
           longitude: position.longitude,
+          orderId: state.activeOrderId,
         );
   }
 }

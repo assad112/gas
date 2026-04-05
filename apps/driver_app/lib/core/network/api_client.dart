@@ -10,9 +10,9 @@ final apiClientProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
       baseUrl: Environment.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 12),
-      receiveTimeout: const Duration(seconds: 12),
-      sendTimeout: const Duration(seconds: 12),
+      connectTimeout: const Duration(seconds: 25),
+      receiveTimeout: const Duration(seconds: 25),
+      sendTimeout: const Duration(seconds: 25),
       headers: const {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -34,9 +34,13 @@ final apiClientProvider = Provider<Dio>((ref) {
       onError: (error, handler) {
         final response = error.response;
         final payload = response?.data;
+        final fallbackMessage = error.type == DioExceptionType.connectionTimeout
+            ? 'Connection timed out while reaching ${Environment.apiBaseUrl}.'
+            : 'Request failed';
         final message = payload is Map<String, dynamic>
-            ? (payload['message'] ?? error.message ?? 'Request failed').toString()
-            : (error.message ?? 'Request failed');
+            ? (payload['message'] ?? error.message ?? fallbackMessage)
+                  .toString()
+            : (error.message ?? fallbackMessage);
 
         handler.reject(
           DioException(

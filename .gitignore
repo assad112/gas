@@ -4,4 +4,5 @@ node_modules
 .claude/
 **/.idea/
 **/*.iml
+apps/driver_app/.vscode/
 apps/customer_app/build/

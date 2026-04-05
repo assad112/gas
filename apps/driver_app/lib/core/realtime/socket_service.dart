@@ -11,10 +11,7 @@ final socketServiceProvider = Provider<SocketService>((ref) {
 });
 
 class RealtimeEvent {
-  const RealtimeEvent({
-    required this.name,
-    required this.payload,
-  });
+  const RealtimeEvent({required this.name, required this.payload});
 
   final String name;
   final dynamic payload;
@@ -47,6 +44,7 @@ class SocketService {
       'new_order',
       'order_updated',
       'order_status_changed',
+      'order_tracking_updated',
       'driver_notification',
       'driver_updated',
       'driver_location_updated',

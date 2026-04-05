@@ -3,7 +3,9 @@ import 'package:driver_app/shared/models/driver_dashboard_data.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final homeControllerProvider =
-    AsyncNotifierProvider<HomeController, DriverDashboardData>(HomeController.new);
+    AsyncNotifierProvider<HomeController, DriverDashboardData>(
+      HomeController.new,
+    );
 
 class HomeController extends AsyncNotifier<DriverDashboardData> {
   @override

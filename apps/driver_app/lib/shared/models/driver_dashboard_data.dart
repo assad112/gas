@@ -51,12 +51,23 @@ class DriverDashboardData {
       availableOrdersCount: parseInt(json["summary"]?["available_orders"]),
       todayEarnings: parseAmount(json["summary"]?["today_earnings"]),
       lifetimeEarnings: parseAmount(json["summary"]?["lifetime_earnings"]),
-      availableOrders: ((json["availableOrders"] ?? json["available_orders"]) as List? ?? const [])
-          .map((item) => DeliveryOrder.fromJson(Map<String, dynamic>.from(item as Map)))
-          .toList(),
-      activeOrders: ((json["activeOrders"] ?? json["active_orders"]) as List? ?? const [])
-          .map((item) => DeliveryOrder.fromJson(Map<String, dynamic>.from(item as Map)))
-          .toList(),
+      availableOrders:
+          ((json["availableOrders"] ?? json["available_orders"]) as List? ??
+                  const [])
+              .map(
+                (item) => DeliveryOrder.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ),
+              )
+              .toList(),
+      activeOrders:
+          ((json["activeOrders"] ?? json["active_orders"]) as List? ?? const [])
+              .map(
+                (item) => DeliveryOrder.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ),
+              )
+              .toList(),
       earningsSummary: EarningsSummary.fromJson(
         Map<String, dynamic>.from(json["earnings"] as Map? ?? const {}),
       ),

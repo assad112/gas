@@ -471,13 +471,9 @@ async function getDriverDashboardSummary(driverId) {
         SELECT COUNT(*)::INTEGER AS available_count
         FROM orders o
         WHERE o.status = 'pending'
-          AND o.assigned_driver_id IS NULL
-          AND NOT EXISTS (
-            SELECT 1
-            FROM driver_order_rejections dor
-            WHERE dor.order_id = o.id
-              AND dor.driver_id = $1
-          )
+          AND o.current_candidate_driver_id = $1
+          AND o.driver_stage = 'driver_notified'
+          AND (o.dispatch_expires_at IS NULL OR o.dispatch_expires_at > NOW())
       )
       SELECT
         (SELECT total_completed FROM delivered_orders) AS total_completed,

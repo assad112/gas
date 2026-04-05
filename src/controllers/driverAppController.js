@@ -1,10 +1,16 @@
 const driverModel = require("../models/driverModel");
 const orderModel = require("../models/orderModel");
 const {
+  acceptDispatchedOrder,
+  redispatchOrder,
+  resumePendingDispatches
+} = require("../services/driverDispatchService");
+const {
   emitOrderEvents,
   emitOrderTrackingUpdate,
-  syncRelatedDrivers
-} = require("./orderController");
+  emitDriverNotification
+} = require("../services/orderRealtimeService");
+const { syncRelatedDrivers } = require("./orderController");
 const {
   enrichOrderTracking,
   enrichOrdersTracking
@@ -71,6 +77,22 @@ function toNullableOrderId(value) {
   return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : null;
 }
 
+function shouldIncludeTracking(value) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
 function normalizeDriverStage(order) {
   if (order?.driver_stage) {
     return order.driver_stage;
@@ -95,6 +117,16 @@ function normalizeDriverStage(order) {
   return "new_order";
 }
 
+function shouldAttemptPendingRedispatch(driver) {
+  return driver?.status === "online" && driver?.availability === "available";
+}
+
+function schedulePendingRedispatch(io) {
+  resumePendingDispatches(io).catch((error) => {
+    console.error(`Pending dispatch resume failed: ${error.message}`);
+  });
+}
+
 function emitDriverUpdated(io, driver, eventName = "driver_updated") {
   if (!io || !driver) {
     return;
@@ -110,14 +142,6 @@ function emitDriverUpdated(io, driver, eventName = "driver_updated") {
       io.to(roomName).emit("driver_updated", driver);
     }
   }
-}
-
-function emitDriverNotification(io, driverId, payload) {
-  if (!io || !driverId || !payload) {
-    return;
-  }
-
-  io.to(`driver:${driverId}`).emit("driver_notification", payload);
 }
 
 async function resolveTrackedOrderForLocationUpdate(driverId, requestedOrderId) {
@@ -154,6 +178,7 @@ async function resolveTrackedOrderForLocationUpdate(driverId, requestedOrderId) 
 async function getDriverDashboard(req, res, next) {
   try {
     const driverId = Number(req.driver.id);
+    const includeTracking = shouldIncludeTracking(req.query.includeTracking);
     const [driver, summary, availableOrders, activeOrders, earnings] =
       await Promise.all([
         driverModel.getDriverById(driverId),
@@ -162,13 +187,15 @@ async function getDriverDashboard(req, res, next) {
         orderModel.getDriverActiveOrders(driverId),
         orderModel.getDriverEarningsSummary(driverId)
       ]);
-    const enrichedActiveOrders = await enrichOrdersTracking(activeOrders);
+    const dashboardActiveOrders = includeTracking
+      ? await enrichOrdersTracking(activeOrders)
+      : activeOrders;
 
     return res.status(200).json({
       driver: driverModel.toDriverProfile(driver),
       summary,
       availableOrders,
-      activeOrders: enrichedActiveOrders,
+      activeOrders: dashboardActiveOrders,
       earnings
     });
   } catch (error) {
@@ -214,6 +241,10 @@ async function updateAvailability(req, res, next) {
     );
 
     emitDriverUpdated(req.app.get("io"), updatedDriver);
+
+    if (shouldAttemptPendingRedispatch(updatedDriver)) {
+      schedulePendingRedispatch(req.app.get("io"));
+    }
 
     return res.status(200).json({
       driver: driverModel.toDriverProfile(
@@ -275,6 +306,10 @@ async function updateLocation(req, res, next) {
 
     emitDriverUpdated(req.app.get("io"), updatedDriver, "driver_location_updated");
 
+    if (shouldAttemptPendingRedispatch(updatedDriver)) {
+      schedulePendingRedispatch(req.app.get("io"));
+    }
+
     if (trackedOrder) {
       await emitOrderTrackingUpdate(req.app.get("io"), trackedOrder);
     }
@@ -328,8 +363,11 @@ async function getAvailableOrders(req, res, next) {
 async function getActiveOrders(req, res, next) {
   try {
     const orders = await orderModel.getDriverActiveOrders(Number(req.driver.id));
-    const enrichedOrders = await enrichOrdersTracking(orders);
-    return res.status(200).json(enrichedOrders);
+    const includeTracking = shouldIncludeTracking(req.query.includeTracking);
+    const responseOrders = includeTracking
+      ? await enrichOrdersTracking(orders)
+      : orders;
+    return res.status(200).json(responseOrders);
   } catch (error) {
     return next(error);
   }
@@ -388,43 +426,12 @@ async function acceptOrder(req, res, next) {
       });
     }
 
-    const existingOrder = await orderModel.getOrderById(orderId);
-
-    if (!existingOrder) {
-      return res.status(404).json({
-        message: "Order not found."
-      });
-    }
-
-    if (existingOrder.status !== "pending") {
-      return res.status(409).json({
-        message: "Only pending orders can be accepted."
-      });
-    }
-
-    if (
-      existingOrder.assigned_driver_id &&
-      Number(existingOrder.assigned_driver_id) !== driverId
-    ) {
-      return res.status(409).json({
-        message: "This order is already assigned to another driver."
-      });
-    }
-
-    const updatedOrder = await orderModel.updateOrder(orderId, {
-      status: "accepted",
-      driverStage: "accepted",
-      assignedDriverId: driverId
+    const updatedOrder = await acceptDispatchedOrder({
+      orderId,
+      driverId,
+      io: req.app.get("io")
     });
     const enrichedOrder = await enrichOrderTracking(updatedOrder);
-
-    await syncRelatedDrivers(existingOrder, updatedOrder);
-    emitOrderEvents(req.app.get("io"), enrichedOrder);
-    emitDriverNotification(req.app.get("io"), driverId, {
-      type: "accepted",
-      orderId: enrichedOrder.id,
-      message: `Order #${enrichedOrder.id} has been assigned to you.`
-    });
 
     return res.status(200).json(enrichedOrder);
   } catch (error) {
@@ -436,44 +443,22 @@ async function rejectOrder(req, res, next) {
   try {
     const orderId = Number(req.params.id);
     const reason = toNullableString(req.body.reason);
+    const driverId = Number(req.driver.id);
 
     if (Number.isNaN(orderId) || orderId <= 0) {
       return res.status(400).json({
         message: "Invalid order id."
       });
     }
-
-    const existingOrder = await orderModel.getOrderById(orderId);
-
-    if (!existingOrder) {
-      return res.status(404).json({
-        message: "Order not found."
-      });
-    }
-
-    if (existingOrder.status !== "pending") {
-      return res.status(409).json({
-        message: "Only pending orders can be rejected."
-      });
-    }
-
-    if (existingOrder.assigned_driver_id) {
-      return res.status(409).json({
-        message: "Assigned order cannot be rejected from the available queue."
-      });
-    }
-
-    await orderModel.markOrderRejectedByDriver(
+    await redispatchOrder({
       orderId,
-      Number(req.driver.id),
-      reason
-    );
-
-    emitDriverNotification(req.app.get("io"), Number(req.driver.id), {
-      type: "rejected",
-      orderId,
-      message: `Order #${orderId} has been removed from your queue.`
+      driverId,
+      mode: "rejected",
+      rejectionReason: reason,
+      io: req.app.get("io")
     });
+
+    schedulePendingRedispatch(req.app.get("io"));
 
     return res.status(200).json({
       message: "Order rejected for this driver."
@@ -542,7 +527,7 @@ async function updateOrderStage(req, res, next) {
     });
     const enrichedOrder = await enrichOrderTracking(updatedOrder);
 
-    await syncRelatedDrivers(existingOrder, updatedOrder);
+    await syncRelatedDrivers(existingOrder, updatedOrder, req.app.get("io"));
     emitOrderEvents(req.app.get("io"), enrichedOrder);
     emitDriverNotification(req.app.get("io"), driverId, {
       type: nextStage,

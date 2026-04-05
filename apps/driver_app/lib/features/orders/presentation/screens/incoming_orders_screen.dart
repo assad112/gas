@@ -1,3 +1,5 @@
+import 'package:driver_app/core/localization/app_strings.dart';
+import 'package:driver_app/core/theme/app_theme.dart';
 import 'package:driver_app/features/orders/presentation/orders_controller.dart';
 import 'package:driver_app/features/orders/presentation/screens/order_details_screen.dart';
 import 'package:driver_app/features/orders/presentation/screens/order_history_screen.dart';
@@ -24,7 +26,9 @@ class _IncomingOrdersScreenState extends ConsumerState<IncomingOrdersScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    Future.microtask(() => ref.read(ordersControllerProvider.notifier).ensureLoaded());
+    Future.microtask(
+      () => ref.read(ordersControllerProvider.notifier).ensureLoaded(),
+    );
   }
 
   @override
@@ -37,10 +41,11 @@ class _IncomingOrdersScreenState extends ConsumerState<IncomingOrdersScreen>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(ordersControllerProvider);
+    final strings = context.strings;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Orders'),
+        title: Text(strings.ordersTitle),
         actions: [
           IconButton(
             onPressed: () {
@@ -49,47 +54,99 @@ class _IncomingOrdersScreenState extends ConsumerState<IncomingOrdersScreen>
               );
             },
             icon: const Icon(Icons.history_rounded),
+            tooltip: strings.orderHistoryTitle,
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(ordersControllerProvider.notifier).refreshAll(),
+        onRefresh: () =>
+            ref.read(ordersControllerProvider.notifier).refreshAll(),
+        color: AppColors.primary,
         child: ListView(
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           children: [
+            // Search bar
             TextField(
               controller: _searchController,
               onChanged: (value) {
-                ref.read(ordersControllerProvider.notifier).refreshAvailable(
-                      search: value,
-                    );
+                ref
+                    .read(ordersControllerProvider.notifier)
+                    .refreshAvailable(search: value);
               },
-              decoration: const InputDecoration(
-                hintText: 'Search by order id, customer, phone, or location',
-                prefixIcon: Icon(Icons.search_rounded),
+              decoration: InputDecoration(
+                hintText: strings.ordersSearchHint,
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded),
+                        onPressed: () {
+                          _searchController.clear();
+                          ref
+                              .read(ordersControllerProvider.notifier)
+                              .refreshAvailable(search: '');
+                        },
+                      )
+                    : null,
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
+            // Tab bar
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                color: AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(16),
               ),
+              padding: const EdgeInsets.all(4),
               child: TabBar(
                 controller: _tabController,
                 indicator: BoxDecoration(
-                  color: const Color(0x1FFF7A1A),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0F172A).withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 dividerColor: Colors.transparent,
-                labelColor: const Color(0xFFFF7A1A),
-                unselectedLabelColor: const Color(0xFF62718C),
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: AppColors.primary,
+                unselectedLabelColor: AppColors.textTertiary,
+                labelStyle: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+                unselectedLabelStyle: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
                 tabs: [
-                  Tab(text: 'Available (${state.availableOrders.length})'),
-                  Tab(text: 'Active (${state.activeOrders.length})'),
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.inbox_rounded, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          strings.availableTab(state.availableOrders.length),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.local_shipping_rounded, size: 16),
+                        const SizedBox(width: 6),
+                        Text(strings.activeTab(state.activeOrders.length)),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -99,17 +156,19 @@ class _IncomingOrdersScreenState extends ConsumerState<IncomingOrdersScreen>
               child: TabBarView(
                 controller: _tabController,
                 children: [
+                  // Available orders tab
                   AppAsyncView(
                     isLoading: state.isLoading,
                     errorMessage: state.errorMessage,
                     isEmpty: state.availableOrders.isEmpty,
-                    emptyTitle: 'No live requests',
-                    emptyMessage: 'When the backend publishes a new order, it will appear here instantly.',
-                    onRetry: () =>
-                        ref.read(ordersControllerProvider.notifier).refreshAll(),
+                    emptyTitle: strings.noLiveRequests,
+                    emptyMessage: strings.noLiveRequestsSubtitle,
+                    onRetry: () => ref
+                        .read(ordersControllerProvider.notifier)
+                        .refreshAll(),
                     child: ListView.separated(
                       itemCount: state.availableOrders.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final order = state.availableOrders[index];
                         return OrderCard(
@@ -117,7 +176,8 @@ class _IncomingOrdersScreenState extends ConsumerState<IncomingOrdersScreen>
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => OrderDetailsScreen(orderId: order.id),
+                                builder: (_) =>
+                                    OrderDetailsScreen(orderId: order.id),
                               ),
                             );
                           },
@@ -125,19 +185,21 @@ class _IncomingOrdersScreenState extends ConsumerState<IncomingOrdersScreen>
                       },
                     ),
                   ),
+                  // Active orders tab
                   AppAsyncView(
                     isLoading: state.isLoading,
                     errorMessage: state.errorMessage,
                     isEmpty: state.activeOrders.isEmpty,
-                    emptyTitle: 'No active delivery',
-                    emptyMessage: 'Accepted orders in progress will stay here until completion.',
-                    onRetry: () =>
-                        ref.read(ordersControllerProvider.notifier).refreshAll(),
+                    emptyTitle: strings.noActiveDelivery,
+                    emptyMessage: strings.noActiveDeliverySubtitle,
+                    onRetry: () => ref
+                        .read(ordersControllerProvider.notifier)
+                        .refreshAll(),
                     child: ListView(
                       children: [
-                        const SectionHeader(
-                          title: 'Current delivery queue',
-                          subtitle: 'Manage active customer deliveries in real time.',
+                        SectionHeader(
+                          title: strings.currentDeliveryQueue,
+                          subtitle: strings.currentDeliveryQueueSubtitle,
                         ),
                         const SizedBox(height: 12),
                         ...state.activeOrders.map(

@@ -10,8 +10,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final ordersControllerProvider =
     NotifierProvider<OrdersController, OrdersState>(OrdersController.new);
 
-final orderDetailsProvider =
-    FutureProvider.family<DeliveryOrder, String>((ref, orderId) async {
+final orderDetailsProvider = FutureProvider.family<DeliveryOrder, String>((
+  ref,
+  orderId,
+) async {
+  final ordersState = ref.watch(ordersControllerProvider);
+
+  for (final collection in [
+    ordersState.activeOrders,
+    ordersState.availableOrders,
+    ordersState.historyOrders,
+  ]) {
+    for (final order in collection) {
+      if (order.id == orderId) {
+        return order;
+      }
+    }
+  }
+
   return ref.read(ordersRepositoryProvider).fetchOrderDetails(orderId);
 });
 
@@ -64,7 +80,9 @@ class OrdersController extends Notifier<OrdersState> {
 
   Future<void> refreshAvailable({String? search}) async {
     final repository = ref.read(ordersRepositoryProvider);
-    final availableOrders = await repository.fetchAvailableOrders(search: search);
+    final availableOrders = await repository.fetchAvailableOrders(
+      search: search,
+    );
     state = state.copyWith(availableOrders: availableOrders, hasLoaded: true);
   }
 
@@ -76,7 +94,9 @@ class OrdersController extends Notifier<OrdersState> {
 
   Future<void> acceptOrder(String orderId) async {
     await _runMutation(orderId, () async {
-      final order = await ref.read(ordersRepositoryProvider).acceptOrder(orderId);
+      final order = await ref
+          .read(ordersRepositoryProvider)
+          .acceptOrder(orderId);
       _applyOrderUpdate(order);
       await _refreshLinkedViews();
     });
@@ -84,10 +104,13 @@ class OrdersController extends Notifier<OrdersState> {
 
   Future<void> rejectOrder(String orderId, {String? reason}) async {
     await _runMutation(orderId, () async {
-      await ref.read(ordersRepositoryProvider).rejectOrder(orderId, reason: reason);
+      await ref
+          .read(ordersRepositoryProvider)
+          .rejectOrder(orderId, reason: reason);
       state = state.copyWith(
-        availableOrders:
-            state.availableOrders.where((order) => order.id != orderId).toList(),
+        availableOrders: state.availableOrders
+            .where((order) => order.id != orderId)
+            .toList(),
       );
       await _refreshLinkedViews();
     });
@@ -98,12 +121,10 @@ class OrdersController extends Notifier<OrdersState> {
     required String stage,
   }) async {
     await _runMutation(orderId, () async {
-      final order = await ref.read(ordersRepositoryProvider).updateOrderStage(
-            orderId: orderId,
-            stage: stage,
-          );
+      final order = await ref
+          .read(ordersRepositoryProvider)
+          .updateOrderStage(orderId: orderId, stage: stage);
       _applyOrderUpdate(order);
-      ref.invalidate(orderDetailsProvider(orderId));
       await _refreshLinkedViews();
     });
   }
@@ -112,7 +133,10 @@ class OrdersController extends Notifier<OrdersState> {
     _applyOrderUpdate(order);
   }
 
-  Future<void> _runMutation(String orderId, Future<void> Function() action) async {
+  Future<void> _runMutation(
+    String orderId,
+    Future<void> Function() action,
+  ) async {
     state = state.copyWith(
       pendingOrderIds: {...state.pendingOrderIds, orderId},
       clearError: true,
@@ -152,16 +176,18 @@ class OrdersController extends Notifier<OrdersState> {
     final currentDriverId = ref.read(authControllerProvider).driver?.id;
     final belongsToCurrentDriver =
         currentDriverId != null && order.assignedDriverId == currentDriverId;
+    final isOfferForCurrentDriver = order.isOfferForDriver(currentDriverId);
 
     var availableOrders = remove(state.availableOrders, order.id);
     var activeOrders = remove(state.activeOrders, order.id);
     var historyOrders = remove(state.historyOrders, order.id);
 
-    if (order.isAvailable && order.assignedDriverId == null) {
+    if (isOfferForCurrentDriver) {
       availableOrders = upsert(availableOrders, order);
     } else if (belongsToCurrentDriver && order.isActive) {
       activeOrders = upsert(activeOrders, order);
-    } else if (belongsToCurrentDriver && (order.isCompleted || order.isCancelled)) {
+    } else if (belongsToCurrentDriver &&
+        (order.isCompleted || order.isCancelled)) {
       historyOrders = upsert(historyOrders, order);
     }
 

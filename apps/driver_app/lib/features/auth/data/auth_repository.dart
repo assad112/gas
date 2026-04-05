@@ -9,10 +9,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 class AuthResult {
-  const AuthResult({
-    required this.token,
-    required this.driver,
-  });
+  const AuthResult({required this.token, required this.driver});
 
   final String token;
   final DriverProfile driver;
@@ -29,35 +26,7 @@ class AuthRepository {
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/driver-auth/login',
-      data: {
-        'identifier': identifier,
-        'password': password,
-      },
-    );
-
-    return _mapAuthResult(response.data ?? const {});
-  }
-
-  Future<AuthResult> register({
-    required String name,
-    required String phone,
-    required String password,
-    String? email,
-    String? vehicleLabel,
-    String? licenseNumber,
-  }) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/driver-auth/register',
-      data: {
-        'name': name,
-        'phone': phone,
-        'password': password,
-        if (email != null && email.isNotEmpty) 'email': email,
-        if (vehicleLabel != null && vehicleLabel.isNotEmpty)
-          'vehicleLabel': vehicleLabel,
-        if (licenseNumber != null && licenseNumber.isNotEmpty)
-          'licenseNumber': licenseNumber,
-      },
+      data: {'identifier': identifier, 'password': password},
     );
 
     return _mapAuthResult(response.data ?? const {});

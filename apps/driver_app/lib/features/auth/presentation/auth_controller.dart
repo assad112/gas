@@ -6,8 +6,9 @@ import 'package:driver_app/features/auth/presentation/auth_state.dart';
 import 'package:driver_app/shared/models/driver_profile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);
 
 class AuthController extends Notifier<AuthState> {
   @override
@@ -82,10 +83,9 @@ class AuthController extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      final result = await ref.read(authRepositoryProvider).login(
-            identifier: identifier,
-            password: password,
-          );
+      final result = await ref
+          .read(authRepositoryProvider)
+          .login(identifier: identifier, password: password);
 
       await ref
           .read(sessionStorageProvider)
@@ -100,51 +100,7 @@ class AuthController extends Notifier<AuthState> {
       );
       return true;
     } catch (error) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
-      return false;
-    }
-  }
-
-  Future<bool> register({
-    required String name,
-    required String phone,
-    required String password,
-    String? email,
-    String? vehicleLabel,
-    String? licenseNumber,
-  }) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-
-    try {
-      final result = await ref.read(authRepositoryProvider).register(
-            name: name,
-            phone: phone,
-            password: password,
-            email: email,
-            vehicleLabel: vehicleLabel,
-            licenseNumber: licenseNumber,
-          );
-
-      await ref
-          .read(sessionStorageProvider)
-          .saveSession(token: result.token, driver: result.driver);
-      ref.read(socketServiceProvider).connect(result.token);
-
-      state = state.copyWith(
-        isLoading: false,
-        hasBootstrapped: true,
-        token: result.token,
-        driver: result.driver,
-      );
-      return true;
-    } catch (error) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      state = state.copyWith(isLoading: false, errorMessage: error.toString());
       return false;
     }
   }
@@ -166,11 +122,15 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> refreshDriver() async {
     try {
-      final driver = await ref.read(authRepositoryProvider).fetchCurrentDriver();
+      final driver = await ref
+          .read(authRepositoryProvider)
+          .fetchCurrentDriver();
       final token = state.token;
 
       if (token != null) {
-        await ref.read(sessionStorageProvider).saveSession(token: token, driver: driver);
+        await ref
+            .read(sessionStorageProvider)
+            .saveSession(token: token, driver: driver);
       }
 
       state = state.copyWith(driver: driver, clearError: true);
@@ -183,7 +143,9 @@ class AuthController extends Notifier<AuthState> {
     final token = state.token;
 
     if (token != null) {
-      await ref.read(sessionStorageProvider).saveSession(token: token, driver: driver);
+      await ref
+          .read(sessionStorageProvider)
+          .saveSession(token: token, driver: driver);
     }
 
     state = state.copyWith(driver: driver);

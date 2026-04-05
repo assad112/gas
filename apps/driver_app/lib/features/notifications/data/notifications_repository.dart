@@ -3,7 +3,9 @@ import 'package:driver_app/core/network/api_client.dart';
 import 'package:driver_app/shared/models/driver_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final notificationsRepositoryProvider = Provider<NotificationsRepository>((ref) {
+final notificationsRepositoryProvider = Provider<NotificationsRepository>((
+  ref,
+) {
   return NotificationsRepository(ref.watch(apiClientProvider));
 });
 

@@ -21,15 +21,24 @@ class OrdersRepository {
     );
 
     return (response.data ?? const [])
-        .map((item) => DeliveryOrder.fromJson(Map<String, dynamic>.from(item as Map)))
+        .map(
+          (item) =>
+              DeliveryOrder.fromJson(Map<String, dynamic>.from(item as Map)),
+        )
         .toList();
   }
 
   Future<List<DeliveryOrder>> fetchActiveOrders() async {
-    final response = await _dio.get<List<dynamic>>('/driver/orders/active');
+    final response = await _dio.get<List<dynamic>>(
+      '/driver/orders/active',
+      queryParameters: const {'includeTracking': false},
+    );
 
     return (response.data ?? const [])
-        .map((item) => DeliveryOrder.fromJson(Map<String, dynamic>.from(item as Map)))
+        .map(
+          (item) =>
+              DeliveryOrder.fromJson(Map<String, dynamic>.from(item as Map)),
+        )
         .toList();
   }
 
@@ -42,28 +51,31 @@ class OrdersRepository {
     );
 
     return (response.data ?? const [])
-        .map((item) => DeliveryOrder.fromJson(Map<String, dynamic>.from(item as Map)))
+        .map(
+          (item) =>
+              DeliveryOrder.fromJson(Map<String, dynamic>.from(item as Map)),
+        )
         .toList();
   }
 
   Future<DeliveryOrder> fetchOrderDetails(String orderId) async {
-    final response =
-        await _dio.get<Map<String, dynamic>>('/driver/orders/$orderId');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/driver/orders/$orderId',
+    );
     return DeliveryOrder.fromJson(response.data ?? const {});
   }
 
   Future<DeliveryOrder> acceptOrder(String orderId) async {
-    final response =
-        await _dio.post<Map<String, dynamic>>('/driver/orders/$orderId/accept');
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/driver/orders/$orderId/accept',
+    );
     return DeliveryOrder.fromJson(response.data ?? const {});
   }
 
   Future<void> rejectOrder(String orderId, {String? reason}) async {
     await _dio.post(
       '/driver/orders/$orderId/reject',
-      data: {
-        if (reason != null && reason.isNotEmpty) 'reason': reason,
-      },
+      data: {if (reason != null && reason.isNotEmpty) 'reason': reason},
     );
   }
 
@@ -81,6 +93,7 @@ class OrdersRepository {
   Future<void> updateDriverLocation({
     required double latitude,
     required double longitude,
+    String? orderId,
     String? currentLocation,
   }) async {
     await _dio.patch(
@@ -88,6 +101,10 @@ class OrdersRepository {
       data: {
         'latitude': latitude,
         'longitude': longitude,
+        if (orderId != null && orderId.isNotEmpty) ...{
+          'orderId': orderId,
+          'currentOrderId': orderId,
+        },
         if (currentLocation != null && currentLocation.isNotEmpty)
           'currentLocation': currentLocation,
       },

@@ -7,6 +7,10 @@ const next = require("next");
 const createApp = require("./app");
 const { initializeDatabase } = require("./config/db");
 const initializeSocket = require("./config/socket");
+const {
+  configureDispatchRuntime,
+  resumePendingDispatches
+} = require("./services/driverDispatchService");
 
 const PORT = Number(process.env.PORT || 5000);
 const projectRoot = path.resolve(__dirname, "..");
@@ -29,6 +33,8 @@ async function startServer() {
     const io = initializeSocket(server);
 
     app.set("io", io);
+    configureDispatchRuntime(io);
+    await resumePendingDispatches(io);
 
     server.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);

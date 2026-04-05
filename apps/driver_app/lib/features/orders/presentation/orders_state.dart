@@ -13,14 +13,14 @@ class OrdersState {
   });
 
   const OrdersState.initial()
-      : isLoading = false,
-        hasLoaded = false,
-        isRefreshing = false,
-        errorMessage = null,
-        availableOrders = const [],
-        activeOrders = const [],
-        historyOrders = const [],
-        pendingOrderIds = const <String>{};
+    : isLoading = false,
+      hasLoaded = false,
+      isRefreshing = false,
+      errorMessage = null,
+      availableOrders = const [],
+      activeOrders = const [],
+      historyOrders = const [],
+      pendingOrderIds = const <String>{};
 
   final bool isLoading;
   final bool hasLoaded;

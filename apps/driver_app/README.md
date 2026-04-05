@@ -10,22 +10,26 @@ Centralized in:
 
 Defaults:
 
-- API: `http://10.0.2.2:5000/api`
-- Socket.IO: `http://10.0.2.2:5000`
+- API: `http://192.168.0.90:3000/api` for Android real devices on the same LAN
+- Socket.IO: `http://192.168.0.90:3000` for Android real devices on the same LAN
+
+Notes:
+
+- `10.0.2.2` works only for the Android emulator, not a physical phone.
+- For another Wi-Fi or another machine IP, override with `--dart-define`.
 
 Override at build/run time:
 
 ```bash
 flutter run \
-  --dart-define=DRIVER_API_BASE_URL=http://YOUR_HOST:5000/api \
-  --dart-define=DRIVER_SOCKET_BASE_URL=http://YOUR_HOST:5000
+  --dart-define=DRIVER_API_BASE_URL=http://YOUR_HOST:3000/api \
+  --dart-define=DRIVER_SOCKET_BASE_URL=http://YOUR_HOST:3000
 ```
 
 ## Main integration points
 
 Driver auth:
 
-- `POST /api/driver-auth/register`
 - `POST /api/driver-auth/login`
 - `GET /api/driver-auth/me`
 - `POST /api/driver-auth/logout`
@@ -58,18 +62,12 @@ Socket events used by the app:
 
 ## Maps
 
-Android manifest placeholder:
-
-- `DRIVER_GOOGLE_MAPS_API_KEY`
-
-Pass it during build if needed:
-
-```bash
-flutter run --dart-define=DRIVER_GOOGLE_MAPS_API_KEY=YOUR_KEY
-```
+- Active delivery tracking uses OpenStreetMap tiles rendered with `flutter_map`.
+- Turn-by-turn launch falls back to native map apps when available, then OpenStreetMap web directions powered by OSRM.
 
 ## Notes
 
+- Driver accounts are created from the admin dashboard only. The driver app does not expose self-registration.
 - Firebase Cloud Messaging is prepared structurally through `NotificationService`, but native Firebase setup is still a TODO until project credentials are provided.
 - If customer coordinates are not yet sent by the customer app/backend, the active delivery screen falls back to address-only navigation.
 - On Windows, Gradle may fail when the repo path contains non-Latin characters. If that happens, build from an ASCII junction or move the repo to an ASCII-only path. The code itself builds correctly.

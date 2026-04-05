@@ -3,13 +3,21 @@ const customerModel = require("../models/customerModel");
 const driverModel = require("../models/driverModel");
 const { emitDriverUpdated } = require("./driverController");
 const {
+  clearAllDispatchTimeouts,
+  clearDispatchTimeout,
+  dispatchNewOrder,
+  acceptDispatchedOrder
+} = require("../services/driverDispatchService");
+const {
+  emitOrderEvents,
+  emitOrderTrackingUpdate,
+  emitOrdersReset
+} = require("../services/orderRealtimeService");
+const {
   enrichOrderTracking,
   enrichOrdersTracking
 } = require("../services/trackingRouteService");
 const { validateCoordinatePair } = require("../utils/coordinates");
-
-const ADMIN_ROOM = "admin_dashboard";
-const DRIVERS_ROOM = "drivers_live";
 
 const STATUS_FLOW = {
   accepted: "delivered"
@@ -31,11 +39,30 @@ const ALLOWED_STATUSES = new Set([
 
 const ALLOWED_DRIVER_STAGES = new Set([
   "new_order",
+  "searching_driver",
+  "driver_notified",
+  "no_driver_found",
   "accepted",
   "on_the_way",
   "arrived",
   "delivered",
   "cancelled"
+]);
+
+const CUSTOMER_MUTABLE_ORDER_FIELDS = new Set([
+  "location",
+  "addressText",
+  "address_text",
+  "addressFull",
+  "address_full",
+  "latitude",
+  "longitude",
+  "customerLatitude",
+  "customerLongitude",
+  "customer_latitude",
+  "customer_longitude",
+  "customerLocation",
+  "customer_location"
 ]);
 
 function isValidString(value) {
@@ -104,6 +131,15 @@ function normalizePaymentMethod(value) {
     default:
       return normalizedValue;
   }
+}
+
+function hasOnlyCustomerEditableFields(body = {}) {
+  const keys = Object.keys(body);
+  if (keys.length === 0) {
+    return false;
+  }
+
+  return keys.every((key) => CUSTOMER_MUTABLE_ORDER_FIELDS.has(key));
 }
 
 function hasOrderCoordinateFields(body = {}) {
@@ -189,83 +225,28 @@ function isPhaseThreeCreate(body, payload, authenticatedCustomer) {
   );
 }
 
-function emitOrderEvents(io, order, eventName = "order_updated") {
-  if (!io || !order) {
-    return;
-  }
-
-  const customerRoom = order.customer_id ? `customer:${order.customer_id}` : null;
-  const assignedDriverRoom = order.assigned_driver_id
-    ? `driver:${order.assigned_driver_id}`
-    : null;
-  const targetRooms = [
-    ADMIN_ROOM,
-    DRIVERS_ROOM,
-    customerRoom,
-    assignedDriverRoom
-  ].filter(Boolean);
-
-  for (const roomName of new Set(targetRooms)) {
-    io.to(roomName).emit(eventName, order);
-
-    if (eventName !== "order_updated") {
-      io.to(roomName).emit("order_updated", order);
-    }
-
-    io.to(roomName).emit("order_status_changed", order);
-  }
-}
-
-async function emitOrderTrackingUpdate(io, order) {
-  if (!io || !order) {
-    return;
-  }
-
-  const trackingOrder = await enrichOrderTracking(order);
-
-  const customerRoom = trackingOrder.customer_id
-    ? `customer:${trackingOrder.customer_id}`
-    : null;
-  const assignedDriverRoom = trackingOrder.assigned_driver_id
-    ? `driver:${trackingOrder.assigned_driver_id}`
-    : null;
-  const targetRooms = [customerRoom, assignedDriverRoom].filter(Boolean);
-
-  for (const roomName of new Set(targetRooms)) {
-    io.to(roomName).emit("order_tracking_updated", trackingOrder);
-  }
-}
-
-function emitOrdersReset(io, { deletedCount = 0, affectedCustomerIds = [] } = {}) {
-  if (!io) {
-    return;
-  }
-
-  const targetRooms = [
-    ADMIN_ROOM,
-    DRIVERS_ROOM,
-    ...affectedCustomerIds.map((customerId) => `customer:${customerId}`)
-  ];
-
-  for (const roomName of new Set(targetRooms.filter(Boolean))) {
-    io.to(roomName).emit("orders_reset", {
-      deletedCount,
-      resetAt: new Date().toISOString()
-    });
-  }
-}
-
-async function syncRelatedDrivers(previousOrder, updatedOrder) {
+async function syncRelatedDrivers(previousOrder, updatedOrder, io = null) {
   const driverIds = new Set([
     previousOrder?.assigned_driver_id,
     updatedOrder?.assigned_driver_id
   ]);
 
-  await Promise.all(
+  const updatedDrivers = await Promise.all(
     [...driverIds]
       .filter(Boolean)
-      .map((driverId) => driverModel.syncDriverAvailability(driverId))
+      .map(async (driverId) => {
+        await driverModel.syncDriverAvailability(driverId);
+        return driverModel.getDriverWithActiveOrderById(driverId);
+      })
   );
+
+  if (io) {
+    updatedDrivers.filter(Boolean).forEach((driver) => {
+      emitDriverUpdated(io, driver);
+    });
+  }
+
+  return updatedDrivers.filter(Boolean);
 }
 
 async function createOrder(req, res, next) {
@@ -343,7 +324,7 @@ async function createOrder(req, res, next) {
       }
     }
 
-    const order = await orderModel.createOrder({
+    const createdOrder = await orderModel.createOrder({
       customerId: resolvedCustomer ? Number(resolvedCustomer.id) : null,
       name: resolvedName.trim(),
       phone: resolvedPhone.trim(),
@@ -361,8 +342,11 @@ async function createOrder(req, res, next) {
       customerLatitude: payload.customerLatitude,
       customerLongitude: payload.customerLongitude
     });
+    const order = await dispatchNewOrder({
+      orderId: createdOrder.id,
+      io: req.app.get("io")
+    });
 
-    emitOrderEvents(req.app.get("io"), order, "new_order");
     return res.status(201).json({
       message: "Order created successfully.",
       order
@@ -408,6 +392,7 @@ async function resetOrders(req, res, next) {
     const resetResult = await orderModel.resetOrders();
     const io = req.app.get("io");
 
+    clearAllDispatchTimeouts();
     emitOrdersReset(io, resetResult);
 
     const updatedDrivers = await Promise.all(
@@ -471,6 +456,21 @@ async function updateOrder(req, res, next) {
       return res.status(404).json({
         message: "Order not found."
       });
+    }
+
+    if (req.customer) {
+      if (Number(existingOrder.customer_id) !== Number(req.customer.id)) {
+        return res.status(403).json({
+          message: "You can update only your own orders."
+        });
+      }
+
+      if (!hasOnlyCustomerEditableFields(req.body)) {
+        return res.status(403).json({
+          message:
+            "Authenticated customers can update only the delivery location fields."
+        });
+      }
     }
 
     const nextStatus = toNullableString(req.body.status);
@@ -586,8 +586,19 @@ async function updateOrder(req, res, next) {
     });
     const enrichedOrder = await enrichOrderTracking(updatedOrder);
 
-    await syncRelatedDrivers(existingOrder, updatedOrder);
-    emitOrderEvents(req.app.get("io"), enrichedOrder);
+    if (
+      enrichedOrder?.status !== "pending" ||
+      ["accepted", "cancelled", "delivered", "no_driver_found"].includes(
+        enrichedOrder?.driver_stage
+      )
+    ) {
+      clearDispatchTimeout(orderId);
+    }
+
+    await syncRelatedDrivers(existingOrder, updatedOrder, req.app.get("io"));
+    emitOrderEvents(req.app.get("io"), enrichedOrder, "order_updated", {
+      previousOrder: existingOrder
+    });
 
     return res.status(200).json(enrichedOrder);
   } catch (error) {
@@ -621,46 +632,11 @@ async function driverAcceptOrder(req, res, next) {
       });
     }
 
-    const [existingOrder, driver] = await Promise.all([
-      orderModel.getOrderById(orderId),
-      driverModel.getDriverById(driverId)
-    ]);
-
-    if (!existingOrder) {
-      return res.status(404).json({
-        message: "Order not found."
-      });
-    }
-
-    if (!driver) {
-      return res.status(404).json({
-        message: "Driver not found."
-      });
-    }
-
-    if (existingOrder.status !== "pending") {
-      return res.status(409).json({
-        message: "Only pending orders can be accepted by driver."
-      });
-    }
-
-    if (
-      existingOrder.assigned_driver_id &&
-      Number(existingOrder.assigned_driver_id) !== Number(driverId)
-    ) {
-      return res.status(409).json({
-        message: "This order is already assigned to another driver."
-      });
-    }
-
-    const updatedOrder = await orderModel.updateOrder(orderId, {
-      status: "accepted",
-      assignedDriverId: Number(driverId),
-      driverStage: "accepted"
+    const updatedOrder = await acceptDispatchedOrder({
+      orderId,
+      driverId,
+      io: req.app.get("io")
     });
-
-    await syncRelatedDrivers(existingOrder, updatedOrder);
-    emitOrderEvents(req.app.get("io"), updatedOrder);
 
     return res.status(200).json(updatedOrder);
   } catch (error) {

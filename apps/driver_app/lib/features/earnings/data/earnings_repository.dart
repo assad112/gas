@@ -13,8 +13,9 @@ class EarningsRepository {
   final Dio _dio;
 
   Future<EarningsSummary> fetchSummary() async {
-    final response =
-        await _dio.get<Map<String, dynamic>>('/driver/earnings/summary');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/driver/earnings/summary',
+    );
     return EarningsSummary.fromJson(response.data ?? const {});
   }
 }

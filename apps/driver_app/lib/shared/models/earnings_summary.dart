@@ -24,15 +24,23 @@ class EarningsSummary {
 
     return EarningsSummary(
       completedOrders:
-          int.tryParse((json["completed_orders"] ?? json["completedOrders"] ?? 0).toString()) ?? 0,
-      todayEarnings:
-          parseAmount(json["today_earnings"] ?? json["todayEarnings"]),
-      weeklyEarnings:
-          parseAmount(json["weekly_earnings"] ?? json["weeklyEarnings"]),
-      monthlyEarnings:
-          parseAmount(json["monthly_earnings"] ?? json["monthlyEarnings"]),
-      lifetimeEarnings:
-          parseAmount(json["lifetime_earnings"] ?? json["lifetimeEarnings"]),
+          int.tryParse(
+            (json["completed_orders"] ?? json["completedOrders"] ?? 0)
+                .toString(),
+          ) ??
+          0,
+      todayEarnings: parseAmount(
+        json["today_earnings"] ?? json["todayEarnings"],
+      ),
+      weeklyEarnings: parseAmount(
+        json["weekly_earnings"] ?? json["weeklyEarnings"],
+      ),
+      monthlyEarnings: parseAmount(
+        json["monthly_earnings"] ?? json["monthlyEarnings"],
+      ),
+      lifetimeEarnings: parseAmount(
+        json["lifetime_earnings"] ?? json["lifetimeEarnings"],
+      ),
     );
   }
 }

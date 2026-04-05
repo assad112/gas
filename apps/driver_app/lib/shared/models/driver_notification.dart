@@ -28,6 +28,10 @@ class DriverNotificationItem {
       switch (type) {
         case "new_order":
           return "New delivery request";
+        case "driver_notified":
+          return "Order offer";
+        case "offer_timeout":
+          return "Offer expired";
         case "accepted":
           return "Order accepted";
         case "on_the_way":
@@ -47,6 +51,10 @@ class DriverNotificationItem {
       switch (type) {
         case "new_order":
           return "$gasType request from $customerName is waiting for pickup.";
+        case "driver_notified":
+          return "A nearby customer request is waiting for your response.";
+        case "offer_timeout":
+          return "The offer for order #$orderId was forwarded to another driver.";
         case "delivered":
           return "Order #$orderId was completed successfully.";
         case "cancelled":
@@ -56,7 +64,8 @@ class DriverNotificationItem {
       }
     }
 
-    final timestamp = DateTime.tryParse(
+    final timestamp =
+        DateTime.tryParse(
           (json["updated_at"] ?? json["created_at"] ?? "").toString(),
         ) ??
         DateTime.now();

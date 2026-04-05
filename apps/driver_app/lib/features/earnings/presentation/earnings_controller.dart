@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final earningsControllerProvider =
     AsyncNotifierProvider<EarningsController, EarningsSummary>(
-  EarningsController.new,
-);
+      EarningsController.new,
+    );
 
 class EarningsController extends AsyncNotifier<EarningsSummary> {
   @override

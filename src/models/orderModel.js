@@ -18,6 +18,10 @@ const baseOrderSelect = `
     o.status,
     o.driver_stage,
     o.assigned_driver_id,
+    o.current_candidate_driver_id,
+    o.attempted_driver_ids,
+    o.dispatch_started_at,
+    o.dispatch_expires_at,
     COALESCE(o.latitude, o.customer_latitude) AS latitude,
     COALESCE(o.longitude, o.customer_longitude) AS longitude,
     o.customer_latitude,
@@ -89,6 +93,55 @@ function buildDriverSnapshot(row) {
   };
 }
 
+function normalizeDriverIds(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => Number.parseInt(String(item), 10))
+    .filter((item) => Number.isInteger(item) && item > 0);
+}
+
+function resolvePublicStatus(row) {
+  if (!row) {
+    return "pending";
+  }
+
+  const status = String(row.status || "").trim().toLowerCase();
+  const driverStage = String(row.driver_stage || "").trim().toLowerCase();
+
+  if (status === "cancelled" || driverStage === "cancelled") {
+    return "cancelled";
+  }
+
+  if (status === "delivered" || driverStage === "delivered") {
+    return "delivered";
+  }
+
+  if (status === "accepted") {
+    if (driverStage === "on_the_way" || driverStage === "arrived") {
+      return "on_the_way";
+    }
+
+    return "accepted";
+  }
+
+  if (driverStage === "no_driver_found") {
+    return "no_driver_found";
+  }
+
+  if (driverStage === "driver_notified") {
+    return "driver_notified";
+  }
+
+  if (driverStage === "searching_driver") {
+    return "searching_driver";
+  }
+
+  return status || "pending";
+}
+
 function serializeOrderRow(row) {
   if (!row) {
     return null;
@@ -116,6 +169,13 @@ function serializeOrderRow(row) {
     longitude: driverLongitude
   });
   const driverSnapshot = buildDriverSnapshot(row);
+  const attemptedDriverIds = normalizeDriverIds(row.attempted_driver_ids);
+  const currentCandidateDriverId =
+    row.current_candidate_driver_id === null ||
+    row.current_candidate_driver_id === undefined
+      ? null
+      : Number(row.current_candidate_driver_id);
+  const publicStatus = resolvePublicStatus(row);
 
   return {
     ...row,
@@ -134,6 +194,16 @@ function serializeOrderRow(row) {
     driverLatitude,
     driverLongitude,
     driverVehicleLabel: row.driver_vehicle_label,
+    currentCandidateDriverId,
+    current_candidate_driver_id: currentCandidateDriverId,
+    attemptedDriverIds,
+    attempted_driver_ids: attemptedDriverIds,
+    dispatchStartedAt: row.dispatch_started_at,
+    dispatch_started_at: row.dispatch_started_at,
+    dispatchExpiresAt: row.dispatch_expires_at,
+    dispatch_expires_at: row.dispatch_expires_at,
+    publicStatus,
+    public_status: publicStatus,
     customerLocation,
     customer_location: customerLocation,
     driverLocation,
@@ -183,10 +253,6 @@ function buildOrdersWhereClause({ status, search, customerId }) {
 }
 
 function resolveDriverStageFromStatus(status) {
-  if (status === "pending") {
-    return "new_order";
-  }
-
   if (status === "accepted") {
     return "accepted";
   }
@@ -243,7 +309,7 @@ async function createOrder({
         updated_at
       )
       VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'new_order', NOW()
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'searching_driver', NOW()
       )
       RETURNING id;
     `,
@@ -362,16 +428,9 @@ async function getDriverOrderById(orderId, driverId) {
         AND (
           (
             o.status = 'pending'
-            AND (
-              o.assigned_driver_id IS NULL
-              OR o.assigned_driver_id = $2
-            )
-            AND NOT EXISTS (
-              SELECT 1
-              FROM driver_order_rejections dor
-              WHERE dor.order_id = o.id
-                AND dor.driver_id = $2
-            )
+            AND o.current_candidate_driver_id = $2
+            AND o.driver_stage = 'driver_notified'
+            AND (o.dispatch_expires_at IS NULL OR o.dispatch_expires_at > NOW())
           )
           OR o.assigned_driver_id = $2
         )
@@ -384,126 +443,161 @@ async function getDriverOrderById(orderId, driverId) {
 }
 
 async function updateOrder(id, changes = {}) {
-  const values = [id];
-  const updates = [];
+  const updates = new Map();
+
+  function setValue(column, value) {
+    updates.set(column, {
+      type: "value",
+      column,
+      value
+    });
+  }
+
+  function setExpression(column, expression) {
+    updates.set(column, {
+      type: "expression",
+      column,
+      expression
+    });
+  }
 
   if ("status" in changes) {
-    values.push(changes.status);
-    updates.push(`status = $${values.length}`);
+    setValue("status", changes.status);
 
     if (changes.status === "cancelled") {
-      updates.push(`cancelled_at = NOW()`);
+      setExpression("cancelled_at", "NOW()");
     } else if (changes.status === "delivered") {
-      updates.push(`cancelled_at = NULL`);
-      updates.push(`delivered_at = NOW()`);
+      setExpression("cancelled_at", "NULL");
+      setExpression("delivered_at", "NOW()");
     } else {
-      updates.push(`cancelled_at = NULL`);
+      setExpression("cancelled_at", "NULL");
+    }
+
+    if (changes.status !== "pending") {
+      setExpression("current_candidate_driver_id", "NULL");
+      setExpression("dispatch_started_at", "NULL");
+      setExpression("dispatch_expires_at", "NULL");
     }
   }
 
   if ("driverStage" in changes) {
-    values.push(changes.driverStage);
-    updates.push(`driver_stage = $${values.length}`);
+    setValue("driver_stage", changes.driverStage);
 
     if (changes.driverStage === "accepted") {
-      updates.push(`accepted_at = COALESCE(accepted_at, NOW())`);
+      setExpression("accepted_at", "COALESCE(accepted_at, NOW())");
     }
 
     if (changes.driverStage === "delivered") {
-      updates.push(`delivered_at = NOW()`);
+      setExpression("delivered_at", "NOW()");
     }
 
     if (changes.driverStage === "cancelled") {
-      updates.push(`cancelled_at = NOW()`);
+      setExpression("cancelled_at", "NOW()");
+    }
+
+    if (
+      changes.driverStage === "accepted" ||
+      changes.driverStage === "delivered" ||
+      changes.driverStage === "cancelled" ||
+      changes.driverStage === "no_driver_found"
+    ) {
+      setExpression("current_candidate_driver_id", "NULL");
+      setExpression("dispatch_started_at", "NULL");
+      setExpression("dispatch_expires_at", "NULL");
     }
   } else if ("status" in changes) {
     const inferredStage = resolveDriverStageFromStatus(changes.status);
 
     if (inferredStage) {
-      values.push(inferredStage);
-      updates.push(`driver_stage = $${values.length}`);
+      setValue("driver_stage", inferredStage);
     }
 
     if (changes.status === "accepted") {
-      updates.push(`accepted_at = COALESCE(accepted_at, NOW())`);
+      setExpression("accepted_at", "COALESCE(accepted_at, NOW())");
     }
   }
 
   if ("assignedDriverId" in changes) {
-    values.push(changes.assignedDriverId);
-    updates.push(`assigned_driver_id = $${values.length}`);
+    setValue("assigned_driver_id", changes.assignedDriverId);
+
+    if (changes.assignedDriverId !== null) {
+      setExpression("current_candidate_driver_id", "NULL");
+      setExpression("dispatch_started_at", "NULL");
+      setExpression("dispatch_expires_at", "NULL");
+    }
   }
 
   if ("paymentMethod" in changes) {
-    values.push(changes.paymentMethod);
-    updates.push(`payment_method = $${values.length}`);
+    setValue("payment_method", changes.paymentMethod);
   }
 
   if ("location" in changes) {
-    values.push(changes.location);
-    updates.push(`location = $${values.length}`);
+    setValue("location", changes.location);
   }
 
   if ("addressText" in changes) {
-    values.push(changes.addressText);
-    updates.push(`address_text = $${values.length}`);
+    setValue("address_text", changes.addressText);
   }
 
   if ("addressFull" in changes) {
-    values.push(changes.addressFull);
-    updates.push(`address_full = $${values.length}`);
+    setValue("address_full", changes.addressFull);
   }
 
   if ("quantity" in changes) {
-    values.push(changes.quantity);
-    updates.push(`quantity = $${values.length}`);
+    setValue("quantity", changes.quantity);
   }
 
   if ("notes" in changes) {
-    values.push(changes.notes);
-    updates.push(`notes = $${values.length}`);
+    setValue("notes", changes.notes);
   }
 
   if ("preferredDeliveryWindow" in changes) {
-    values.push(changes.preferredDeliveryWindow);
-    updates.push(`preferred_delivery_window = $${values.length}`);
+    setValue("preferred_delivery_window", changes.preferredDeliveryWindow);
   }
 
   if ("totalAmount" in changes) {
-    values.push(changes.totalAmount);
-    updates.push(`total_amount = $${values.length}`);
+    setValue("total_amount", changes.totalAmount);
   }
 
   if ("customerLatitude" in changes) {
-    values.push(changes.customerLatitude);
-    updates.push(`customer_latitude = $${values.length}`);
+    setValue("customer_latitude", changes.customerLatitude);
   }
 
   if ("customerLongitude" in changes) {
-    values.push(changes.customerLongitude);
-    updates.push(`customer_longitude = $${values.length}`);
+    setValue("customer_longitude", changes.customerLongitude);
   }
 
   if ("latitude" in changes) {
-    values.push(changes.latitude);
-    updates.push(`latitude = $${values.length}`);
+    setValue("latitude", changes.latitude);
   }
 
   if ("longitude" in changes) {
-    values.push(changes.longitude);
-    updates.push(`longitude = $${values.length}`);
+    setValue("longitude", changes.longitude);
   }
 
-  if (updates.length === 0) {
+  if (updates.size === 0) {
     return getOrderById(id);
   }
 
-  updates.push(`updated_at = NOW()`);
+  const values = [id];
+  const assignments = [];
+
+  for (const update of updates.values()) {
+    if (update.type === "value") {
+      values.push(update.value);
+      assignments.push(`${update.column} = $${values.length}`);
+      continue;
+    }
+
+    assignments.push(`${update.column} = ${update.expression}`);
+  }
+
+  assignments.push("updated_at = NOW()");
 
   const result = await db.query(
     `
       UPDATE orders
-      SET ${updates.join(", ")}
+      SET ${assignments.join(", ")}
       WHERE id = $1
       RETURNING id;
     `,
@@ -521,13 +615,9 @@ async function getDriverAvailableOrders(driverId, { search = null } = {}) {
   const params = [driverId];
   const conditions = [
     "o.status = 'pending'",
-    "o.assigned_driver_id IS NULL",
-    `NOT EXISTS (
-      SELECT 1
-      FROM driver_order_rejections dor
-      WHERE dor.order_id = o.id
-        AND dor.driver_id = $1
-    )`
+    "o.current_candidate_driver_id = $1",
+    "o.driver_stage = 'driver_notified'",
+    "(o.dispatch_expires_at IS NULL OR o.dispatch_expires_at > NOW())"
   ];
 
   if (search) {
@@ -670,6 +760,7 @@ async function getDriverNotifications(driverId) {
         o.id,
         o.status,
         o.driver_stage,
+        o.current_candidate_driver_id,
         o.name,
         o.gas_type,
         o.quantity,
@@ -677,7 +768,7 @@ async function getDriverNotifications(driverId) {
         o.updated_at,
         o.created_at,
         CASE
-          WHEN o.status = 'pending' AND o.assigned_driver_id IS NULL THEN 'new_order'
+          WHEN o.status = 'pending' AND o.current_candidate_driver_id = $1 THEN 'driver_notified'
           WHEN o.status = 'accepted' AND o.driver_stage = 'accepted' THEN 'accepted'
           WHEN o.status = 'accepted' AND o.driver_stage = 'on_the_way' THEN 'on_the_way'
           WHEN o.status = 'accepted' AND o.driver_stage = 'arrived' THEN 'arrived'
@@ -689,13 +780,9 @@ async function getDriverNotifications(driverId) {
       WHERE (
           (
             o.status = 'pending'
-            AND o.assigned_driver_id IS NULL
-            AND NOT EXISTS (
-              SELECT 1
-              FROM driver_order_rejections dor
-              WHERE dor.order_id = o.id
-                AND dor.driver_id = $1
-            )
+            AND o.current_candidate_driver_id = $1
+            AND o.driver_stage = 'driver_notified'
+            AND (o.dispatch_expires_at IS NULL OR o.dispatch_expires_at > NOW())
           )
           OR o.assigned_driver_id = $1
         )

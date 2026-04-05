@@ -56,21 +56,23 @@ class DriverProfile {
       email: (json["email"] ?? "").toString(),
       status: (json["status"] ?? "offline").toString(),
       availability: (json["availability"] ?? "available").toString(),
-      currentLocation: (json["currentLocation"] ??
-              json["current_location"] ??
-              "")
+      currentLocation:
+          (json["currentLocation"] ?? json["current_location"] ?? "")
+              .toString(),
+      currentLatitude: parseCoordinate(
+        json["currentLatitude"] ?? json["current_latitude"],
+      ),
+      currentLongitude: parseCoordinate(
+        json["currentLongitude"] ?? json["current_longitude"],
+      ),
+      vehicleLabel: (json["vehicleLabel"] ?? json["vehicle_label"] ?? "")
           .toString(),
-      currentLatitude:
-          parseCoordinate(json["currentLatitude"] ?? json["current_latitude"]),
-      currentLongitude:
-          parseCoordinate(json["currentLongitude"] ?? json["current_longitude"]),
-      vehicleLabel:
-          (json["vehicleLabel"] ?? json["vehicle_label"] ?? "").toString(),
-      licenseNumber:
-          (json["licenseNumber"] ?? json["license_number"] ?? "").toString(),
+      licenseNumber: (json["licenseNumber"] ?? json["license_number"] ?? "")
+          .toString(),
       lastSeenAt: parseDate(json["lastSeenAt"] ?? json["last_seen_at"]),
-      lastLocationAt:
-          parseDate(json["lastLocationAt"] ?? json["last_location_at"]),
+      lastLocationAt: parseDate(
+        json["lastLocationAt"] ?? json["last_location_at"],
+      ),
     );
   }
 

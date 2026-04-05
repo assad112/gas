@@ -10,6 +10,7 @@ const driverAppRoutes = require("./routes/driverAppRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const driverRoutes = require("./routes/driverRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const routeRoutes = require("./routes/routeRoutes");
 const productRoutes = require("./routes/productRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
 const zoneRoutes = require("./routes/zoneRoutes");
@@ -36,6 +37,7 @@ function createApp(nextHandler) {
   app.use("/api/driver-auth", driverAuthRoutes);
   app.use("/api/driver", driverAppRoutes);
   app.use("/api/orders", orderRoutes);
+  app.use("/api/routes", routeRoutes);
   app.use("/api/drivers", driverRoutes);
   app.use("/api/customers", customerRoutes);
   app.use("/api/settings", settingsRoutes);

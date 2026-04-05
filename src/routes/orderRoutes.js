@@ -18,7 +18,7 @@ router.post("/", attachCustomerIfPresent, createOrder);
 router.get("/", attachCustomerIfPresent, getOrders);
 router.delete("/", resetOrders);
 router.get("/:id", getOrderDetails);
-router.patch("/:id", updateOrder);
+router.patch("/:id", attachCustomerIfPresent, updateOrder);
 router.post("/:id/cancel", cancelOrder);
 router.post("/:id/driver-accept", driverAcceptOrder);
 router.put("/:id", advanceOrderStatus);

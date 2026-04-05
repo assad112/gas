@@ -146,6 +146,74 @@ function buildTrackingPayload({
   };
 }
 
+function toPublicRouteResponse(trackingPayload) {
+  const trackingRoute =
+    trackingPayload?.trackingRoute ?? trackingPayload?.tracking_route ?? {};
+  const normalizedPoints = normalizeRoutePoints(
+    trackingPayload?.routePoints ??
+      trackingPayload?.route_points ??
+      trackingRoute.points
+  );
+  const distanceMeters = Math.max(
+    0,
+    Math.round(
+      toFiniteNumber(
+        trackingPayload?.routeDistanceMeters ??
+          trackingPayload?.route_distance_meters ??
+          trackingRoute.distanceMeters
+      ) || 0
+    )
+  );
+  const durationSeconds = Math.max(
+    0,
+    Math.round(
+      toFiniteNumber(
+        trackingPayload?.routeDurationSeconds ??
+          trackingPayload?.route_duration_seconds ??
+          trackingRoute.durationSeconds
+      ) || 0
+    )
+  );
+  const etaMinutes = Math.max(
+    1,
+    Math.ceil(
+      toFiniteNumber(
+        trackingPayload?.etaMinutes ??
+          trackingPayload?.eta_minutes ??
+          trackingRoute.etaMinutes
+      ) ||
+        durationSeconds / 60 ||
+        1
+    )
+  );
+  const computedAt = trackingRoute.computedAt || new Date().toISOString();
+
+  return {
+    provider: trackingRoute.provider || null,
+    isFallback: Boolean(trackingRoute.isFallback),
+    computedAt,
+    distance: distanceMeters,
+    distanceMeters,
+    distanceKm: Number((distanceMeters / 1000).toFixed(2)),
+    duration: durationSeconds,
+    durationSeconds,
+    etaMinutes,
+    geometry: {
+      type: "LineString",
+      coordinates: normalizedPoints.map((point) => [
+        point.longitude,
+        point.latitude
+      ])
+    },
+    points: normalizedPoints.map((point) => ({
+      latitude: point.latitude,
+      longitude: point.longitude,
+      lat: point.latitude,
+      lng: point.longitude
+    }))
+  };
+}
+
 function buildFallbackTracking(origin, destination) {
   const distanceMeters = haversineDistanceMeters(origin, destination);
   const durationSeconds = Math.max(
@@ -190,6 +258,47 @@ async function fetchRouteFromOsrm(origin, destination) {
     durationSeconds: route.duration,
     provider: "osrm"
   });
+}
+
+async function resolveTrackingPayload(originInput, destinationInput) {
+  const origin = normalizeLatLngPoint(originInput);
+  const destination = normalizeLatLngPoint(destinationInput);
+
+  if (!origin || !destination) {
+    throw new Error("Both origin and destination coordinates are required.");
+  }
+
+  const cacheKey = buildCacheKey(origin, destination);
+  const now = Date.now();
+  const cached = routeCache.get(cacheKey);
+
+  if (cached && now - cached.createdAt <= ROUTING_CACHE_TTL_MS) {
+    return cached.payload;
+  }
+
+  let trackingPayload;
+
+  try {
+    trackingPayload = await fetchRouteFromOsrm(origin, destination);
+  } catch (_) {
+    trackingPayload = buildFallbackTracking(origin, destination);
+  }
+
+  routeCache.set(cacheKey, {
+    createdAt: now,
+    payload: trackingPayload
+  });
+
+  return trackingPayload;
+}
+
+async function getRouteBetweenCoordinates(originInput, destinationInput) {
+  const trackingPayload = await resolveTrackingPayload(
+    originInput,
+    destinationInput
+  );
+
+  return toPublicRouteResponse(trackingPayload);
 }
 
 function shouldBuildTrackingForOrder(order) {
@@ -243,29 +352,7 @@ async function enrichOrderTracking(order) {
   }
 
   const { origin, destination } = endpoints;
-  const cacheKey = buildCacheKey(origin, destination);
-  const now = Date.now();
-  const cached = routeCache.get(cacheKey);
-
-  if (cached && now - cached.createdAt <= ROUTING_CACHE_TTL_MS) {
-    return {
-      ...order,
-      ...cached.payload
-    };
-  }
-
-  let trackingPayload;
-
-  try {
-    trackingPayload = await fetchRouteFromOsrm(origin, destination);
-  } catch (_) {
-    trackingPayload = buildFallbackTracking(origin, destination);
-  }
-
-  routeCache.set(cacheKey, {
-    createdAt: now,
-    payload: trackingPayload
-  });
+  const trackingPayload = await resolveTrackingPayload(origin, destination);
 
   return {
     ...order,
@@ -283,5 +370,8 @@ async function enrichOrdersTracking(orders = []) {
 
 module.exports = {
   enrichOrderTracking,
-  enrichOrdersTracking
+  enrichOrdersTracking,
+  getRouteBetweenCoordinates,
+  normalizeLatLngPoint,
+  toPublicRouteResponse
 };

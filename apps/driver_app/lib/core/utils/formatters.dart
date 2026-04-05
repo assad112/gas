@@ -3,58 +3,69 @@ import 'package:intl/intl.dart';
 class Formatters {
   Formatters._();
 
-  static final _currency = NumberFormat.currency(
-    locale: 'ar_OM',
-    symbol: 'ر.ع',
-    decimalDigits: 3,
-  );
+  static String currency(num value, {String localeCode = 'ar'}) {
+    final formatter = NumberFormat.currency(
+      locale: localeCode == 'ar' ? 'ar_OM' : 'en_US',
+      symbol: localeCode == 'ar' ? 'ر.ع.' : 'OMR',
+      decimalDigits: 3,
+    );
 
-  static final _compactDate = DateFormat('dd MMM, hh:mm a');
-  static final _shortTime = DateFormat('hh:mm a');
-
-  static String currency(num value) => _currency.format(value);
-
-  static String dateTime(DateTime? value) {
-    if (value == null) {
-      return 'غير متاح';
-    }
-
-    return _compactDate.format(value.toLocal());
+    return formatter.format(value);
   }
 
-  static String time(DateTime? value) {
+  static String dateTime(DateTime? value, {String localeCode = 'ar'}) {
+    if (value == null) {
+      return localeCode == 'ar' ? 'غير متاح' : 'Unavailable';
+    }
+
+    final formatter = DateFormat(
+      'dd MMM, hh:mm a',
+      localeCode == 'ar' ? 'ar' : 'en_US',
+    );
+    return formatter.format(value.toLocal());
+  }
+
+  static String time(DateTime? value, {String localeCode = 'ar'}) {
     if (value == null) {
       return '--:--';
     }
 
-    return _shortTime.format(value.toLocal());
+    final formatter = DateFormat(
+      'hh:mm a',
+      localeCode == 'ar' ? 'ar' : 'en_US',
+    );
+    return formatter.format(value.toLocal());
   }
 
-  static String paymentMethod(String value) {
+  static String paymentMethod(String value, {String localeCode = 'ar'}) {
     switch (value) {
       case 'cash_on_delivery':
-        return 'Cash on delivery';
+        return localeCode == 'ar' ? 'الدفع عند الاستلام' : 'Cash on delivery';
       case 'card':
-        return 'Card';
+        return localeCode == 'ar' ? 'بطاقة' : 'Card';
+      case 'cash':
+        return localeCode == 'ar' ? 'نقدًا' : 'Cash';
       default:
         return value.replaceAll('_', ' ');
     }
   }
 
-  static String driverStage(String value) {
+  static String driverStage(String value, {String localeCode = 'ar'}) {
     switch (value) {
       case 'new_order':
-        return 'New order';
+        return localeCode == 'ar' ? 'طلب جديد' : 'New order';
       case 'accepted':
-        return 'Accepted';
+        return localeCode == 'ar' ? 'مقبول' : 'Accepted';
       case 'on_the_way':
-        return 'On the way';
+        return localeCode == 'ar' ? 'في الطريق' : 'On the way';
       case 'arrived':
-        return 'Arrived';
+        return localeCode == 'ar' ? 'تم الوصول' : 'Arrived';
       case 'delivered':
-        return 'Delivered';
+        return localeCode == 'ar' ? 'تم التسليم' : 'Delivered';
       case 'cancelled':
-        return 'Cancelled';
+        return localeCode == 'ar' ? 'ملغي' : 'Cancelled';
+      case 'pending':
+        return localeCode == 'ar' ? 'معلق' : 'Pending';
       default:
         return value;
     }

@@ -108,11 +108,15 @@ const createOrdersTableQuery = `
     total_amount NUMERIC(10,3),
     status TEXT NOT NULL DEFAULT 'pending',
     assigned_driver_id INTEGER REFERENCES drivers(id) ON DELETE SET NULL,
+    current_candidate_driver_id INTEGER REFERENCES drivers(id) ON DELETE SET NULL,
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
     customer_latitude DOUBLE PRECISION,
     customer_longitude DOUBLE PRECISION,
     driver_stage TEXT NOT NULL DEFAULT 'new_order',
+    attempted_driver_ids INTEGER[] NOT NULL DEFAULT '{}',
+    dispatch_started_at TIMESTAMP,
+    dispatch_expires_at TIMESTAMP,
     accepted_at TIMESTAMP,
     delivered_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
@@ -265,6 +269,10 @@ const alterOrdersTableQueries = [
   `,
   `
     ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS current_candidate_driver_id INTEGER REFERENCES drivers(id) ON DELETE SET NULL;
+  `,
+  `
+    ALTER TABLE orders
     ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
   `,
   `
@@ -290,6 +298,18 @@ const alterOrdersTableQueries = [
   `
     ALTER TABLE orders
     ADD COLUMN IF NOT EXISTS driver_stage TEXT NOT NULL DEFAULT 'new_order';
+  `,
+  `
+    ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS attempted_driver_ids INTEGER[] NOT NULL DEFAULT '{}';
+  `,
+  `
+    ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS dispatch_started_at TIMESTAMP;
+  `,
+  `
+    ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS dispatch_expires_at TIMESTAMP;
   `,
   `
     ALTER TABLE orders
@@ -332,14 +352,31 @@ const alterOrdersTableQueries = [
   `
     UPDATE orders
     SET driver_stage = CASE
-      WHEN status = 'pending' THEN 'new_order'
+      WHEN status = 'pending' THEN 'searching_driver'
       WHEN status = 'accepted' THEN 'accepted'
       WHEN status = 'delivered' THEN 'delivered'
       WHEN status = 'cancelled' THEN 'cancelled'
-      ELSE COALESCE(driver_stage, 'new_order')
+      ELSE COALESCE(driver_stage, 'searching_driver')
     END
     WHERE driver_stage IS NULL
-       OR driver_stage = '';
+       OR driver_stage = ''
+       OR (status = 'pending' AND driver_stage = 'new_order');
+  `,
+  `
+    UPDATE orders
+    SET attempted_driver_ids = '{}'
+    WHERE attempted_driver_ids IS NULL;
+  `,
+  `
+    UPDATE orders
+    SET current_candidate_driver_id = NULL
+    WHERE status <> 'pending';
+  `,
+  `
+    UPDATE orders
+    SET dispatch_started_at = NULL,
+        dispatch_expires_at = NULL
+    WHERE status <> 'pending';
   `,
   `
     UPDATE orders
@@ -374,6 +411,16 @@ const createOrderStatusIndexQuery = `
 const createOrderDriverIndexQuery = `
   CREATE INDEX IF NOT EXISTS idx_orders_assigned_driver_id
   ON orders (assigned_driver_id);
+`;
+
+const createOrderCandidateDriverIndexQuery = `
+  CREATE INDEX IF NOT EXISTS idx_orders_current_candidate_driver_id
+  ON orders (current_candidate_driver_id);
+`;
+
+const createOrderDispatchStageIndexQuery = `
+  CREATE INDEX IF NOT EXISTS idx_orders_dispatch_stage
+  ON orders (status, driver_stage, dispatch_expires_at);
 `;
 
 const createDriversStatusIndexQuery = `
@@ -571,6 +618,8 @@ async function initializeDatabase(retries = 15, delayMs = 3000) {
       await client.query(createOrderCustomerIndexQuery);
       await client.query(createOrderStatusIndexQuery);
       await client.query(createOrderDriverIndexQuery);
+      await client.query(createOrderCandidateDriverIndexQuery);
+      await client.query(createOrderDispatchStageIndexQuery);
       await client.query(createDriversStatusIndexQuery);
       await client.query(createDriverSessionIndexQuery);
       await client.query(createDriverEmailIndexQuery);

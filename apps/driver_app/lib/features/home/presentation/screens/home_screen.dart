@@ -1,4 +1,6 @@
 import 'package:driver_app/core/utils/formatters.dart';
+import 'package:driver_app/core/localization/app_strings.dart';
+import 'package:driver_app/core/theme/app_theme.dart';
 import 'package:driver_app/features/auth/presentation/auth_controller.dart';
 import 'package:driver_app/features/earnings/presentation/screens/earnings_screen.dart';
 import 'package:driver_app/features/home/presentation/home_controller.dart';
@@ -20,155 +22,204 @@ class HomeScreen extends ConsumerWidget {
     final dashboardState = ref.watch(homeControllerProvider);
     final authState = ref.watch(authControllerProvider);
     final driver = authState.driver;
+    final strings = context.strings;
+    final isOnline = driver?.isOnline == true;
 
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => ref.read(homeControllerProvider.notifier).refresh(),
+          color: AppColors.primary,
           child: ListView(
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
             ),
             padding: const EdgeInsets.all(20),
             children: [
-              Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF0D1732),
-                      Color(0xFF223C78),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              // ─── Header ───────────────────────────────────
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Hello, ${driver?.name ?? 'Driver'}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                driver?.isOnline == true
-                                    ? 'You are visible to dispatch and ready for live orders.'
-                                    : 'Switch online to receive live delivery requests.',
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                            ],
+                        Text(
+                          strings.helloDriver(
+                            driver?.name ?? strings.driverLabel,
                           ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
-                        Switch.adaptive(
-                          value: driver?.isOnline == true,
-                          onChanged: (value) async {
-                            await ref.read(profileControllerProvider.notifier).setAvailability(
-                                  online: value,
-                                  busy: driver?.isBusy == true,
-                                );
-                            await ref.read(authControllerProvider.notifier).refreshDriver();
-                            await ref.read(homeControllerProvider.notifier).refreshSilently();
-                          },
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: isOnline
+                                    ? AppColors.success
+                                    : AppColors.textTertiary,
+                                shape: BoxShape.circle,
+                                boxShadow: isOnline
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.success.withOpacity(
+                                            0.4,
+                                          ),
+                                          blurRadius: 6,
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                isOnline
+                                    ? strings.onlineReadyMessage
+                                    : strings.offlineReadyMessage,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: isOnline
+                                          ? AppColors.success
+                                          : AppColors.textTertiary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        _HeroMetric(
-                          title: 'Availability',
-                          value: driver?.isOnline == true ? 'Online' : 'Offline',
-                        ),
-                        _HeroMetric(
-                          title: 'Vehicle',
-                          value: driver?.vehicleLabel.isNotEmpty == true
-                              ? driver!.vehicleLabel
-                              : 'Not set',
-                        ),
-                        _HeroMetric(
-                          title: 'Current status',
-                          value: driver?.isBusy == true ? 'Busy' : 'Available',
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                  // Online toggle
+                  _OnlineToggle(
+                    isOnline: isOnline,
+                    onChanged: (value) async {
+                      await ref
+                          .read(profileControllerProvider.notifier)
+                          .setAvailability(
+                            online: value,
+                            busy: driver?.isBusy == true,
+                          );
+                      await ref
+                          .read(authControllerProvider.notifier)
+                          .refreshDriver();
+                      await ref
+                          .read(homeControllerProvider.notifier)
+                          .refreshSilently();
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 20),
+              // ─── Driver status card ───────────────────────
+              _DriverStatusCard(
+                isOnline: isOnline,
+                vehicleLabel: driver?.vehicleLabel.isNotEmpty == true
+                    ? driver!.vehicleLabel
+                    : strings.notSet,
+                statusLabel: driver?.isBusy == true
+                    ? strings.busy
+                    : strings.available,
+                isBusy: driver?.isBusy == true,
+              ),
+              const SizedBox(height: 20),
+              // ─── Dashboard metrics ────────────────────────
               dashboardState.when(
                 loading: () => const Padding(
-                  padding: EdgeInsets.all(40),
-                  child: Center(child: CircularProgressIndicator()),
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
                 ),
                 error: (error, _) => AppAsyncView(
                   isLoading: false,
                   errorMessage: error.toString(),
-                  onRetry: () => ref.read(homeControllerProvider.notifier).refresh(),
+                  onRetry: () =>
+                      ref.read(homeControllerProvider.notifier).refresh(),
                   child: const SizedBox.shrink(),
                 ),
                 data: (dashboard) {
-                  final activeOrder =
-                      dashboard.activeOrders.isEmpty ? null : dashboard.activeOrders.first;
+                  final activeOrder = dashboard.activeOrders.isEmpty
+                      ? null
+                      : dashboard.activeOrders.first;
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        physics: const NeverScrollableScrollPhysics(),
-                        childAspectRatio: 1.35,
+                      // Metrics grid
+                      Row(
                         children: [
-                          _MetricCard(
-                            title: 'Available now',
-                            value: dashboard.availableOrdersCount.toString(),
-                            icon: Icons.inbox_outlined,
+                          Expanded(
+                            child: _MetricCard(
+                              title: strings.availableNow,
+                              value: dashboard.availableOrdersCount.toString(),
+                              icon: Icons.inbox_rounded,
+                              iconBg: AppColors.primarySoft,
+                              iconColor: AppColors.primary,
+                            ),
                           ),
-                          _MetricCard(
-                            title: 'Active deliveries',
-                            value: dashboard.activeDeliveries.toString(),
-                            icon: Icons.route_rounded,
-                          ),
-                          _MetricCard(
-                            title: 'Completed',
-                            value: dashboard.totalCompleted.toString(),
-                            icon: Icons.verified_rounded,
-                          ),
-                          _MetricCard(
-                            title: 'Today earnings',
-                            value: Formatters.currency(dashboard.todayEarnings),
-                            icon: Icons.payments_rounded,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _MetricCard(
+                              title: strings.activeDeliveries,
+                              value: dashboard.activeDeliveries.toString(),
+                              icon: Icons.local_shipping_rounded,
+                              iconBg: AppColors.infoSoft,
+                              iconColor: AppColors.info,
+                            ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 24),
-                      const SectionHeader(
-                        title: 'Quick actions',
-                        subtitle: 'Operate the live delivery day from one place.',
                       ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
-                            child: _QuickAction(
+                            child: _MetricCard(
+                              title: strings.completed,
+                              value: dashboard.totalCompleted.toString(),
+                              icon: Icons.verified_rounded,
+                              iconBg: AppColors.successSoft,
+                              iconColor: AppColors.success,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _MetricCard(
+                              title: strings.todayEarnings,
+                              value: Formatters.currency(
+                                dashboard.todayEarnings,
+                                localeCode: strings.localeCode,
+                              ),
+                              icon: Icons.payments_rounded,
+                              iconBg: AppColors.warningSoft,
+                              iconColor: AppColors.warning,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // Quick actions
+                      SectionHeader(
+                        title: strings.quickActions,
+                        subtitle: strings.quickActionsSubtitle,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _QuickActionCard(
                               icon: Icons.stacked_line_chart_rounded,
-                              title: 'Earnings',
+                              title: strings.earnings,
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF10B981), Color(0xFF34D399)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
@@ -180,9 +231,14 @@ class HomeScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: _QuickAction(
+                            child: _QuickActionCard(
                               icon: Icons.history_rounded,
-                              title: 'History',
+                              title: strings.history,
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF3B82F6), Color(0xFF60A5FA)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
@@ -194,20 +250,22 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      // Active delivery
                       if (activeOrder != null) ...[
+                        const SizedBox(height: 24),
                         SectionHeader(
-                          title: 'Active delivery',
+                          title: strings.activeDelivery,
                           trailing: TextButton(
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      ActiveDeliveryScreen(orderId: activeOrder.id),
+                                  builder: (_) => ActiveDeliveryScreen(
+                                    orderId: activeOrder.id,
+                                  ),
                                 ),
                               );
                             },
-                            child: const Text('Open'),
+                            child: Text(strings.open),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -216,26 +274,27 @@ class HomeScreen extends ConsumerWidget {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    ActiveDeliveryScreen(orderId: activeOrder.id),
+                                builder: (_) => ActiveDeliveryScreen(
+                                  orderId: activeOrder.id,
+                                ),
                               ),
                             );
                           },
                         ),
-                        const SizedBox(height: 24),
                       ],
-                      const SectionHeader(
-                        title: 'Incoming requests',
-                        subtitle: 'Live orders ready for acceptance.',
+                      // Incoming requests
+                      const SizedBox(height: 24),
+                      SectionHeader(
+                        title: strings.incomingRequests,
+                        subtitle: strings.incomingRequestsSubtitle,
                       ),
                       const SizedBox(height: 12),
                       AppAsyncView(
                         isLoading: false,
                         errorMessage: null,
                         isEmpty: dashboard.availableOrders.isEmpty,
-                        emptyTitle: 'No pending orders',
-                        emptyMessage:
-                            'New requests from customers will appear here in real time.',
+                        emptyTitle: strings.noPendingOrders,
+                        emptyMessage: strings.noPendingOrdersSubtitle,
                         child: Column(
                           children: dashboard.availableOrders
                               .take(3)
@@ -247,8 +306,9 @@ class HomeScreen extends ConsumerWidget {
                                     onTap: () {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
-                                          builder: (_) =>
-                                              OrderDetailsScreen(orderId: order.id),
+                                          builder: (_) => OrderDetailsScreen(
+                                            orderId: order.id,
+                                          ),
                                         ),
                                       );
                                     },
@@ -270,75 +330,57 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _HeroMetric extends StatelessWidget {
-  const _HeroMetric({
-    required this.title,
-    required this.value,
-  });
+// ─── Online Toggle ───────────────────────────────────────────────────────────
 
-  final String title;
-  final String value;
+class _OnlineToggle extends StatelessWidget {
+  const _OnlineToggle({required this.isOnline, required this.onChanged});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 110,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white10,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-  });
-
-  final String title;
-  final String value;
-  final IconData icon;
+  final bool isOnline;
+  final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () => onChanged(!isOnline),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: 64,
+        height: 34,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: isOnline ? AppColors.success : const Color(0xFFE2E8F0),
+          borderRadius: BorderRadius.circular(99),
+        ),
+        child: Stack(
           children: [
-            Icon(icon, color: const Color(0xFFFF7A1A)),
-            const Spacer(),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF6D7C96),
-                  ),
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              alignment: isOnline
+                  ? AlignmentDirectional.centerEnd
+                  : AlignmentDirectional.centerStart,
+              child: Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  isOnline
+                      ? Icons.power_settings_new_rounded
+                      : Icons.power_off_outlined,
+                  size: 14,
+                  color: isOnline ? AppColors.success : AppColors.textTertiary,
+                ),
+              ),
             ),
           ],
         ),
@@ -347,47 +389,246 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-class _QuickAction extends StatelessWidget {
-  const _QuickAction({
+// ─── Driver status card ──────────────────────────────────────────────────────
+
+class _DriverStatusCard extends StatelessWidget {
+  const _DriverStatusCard({
+    required this.isOnline,
+    required this.vehicleLabel,
+    required this.statusLabel,
+    required this.isBusy,
+  });
+
+  final bool isOnline;
+  final String vehicleLabel;
+  final String statusLabel;
+  final bool isBusy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0D1732), Color(0xFF1E3A7A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0D1732).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _StatusBadgeItem(
+              icon: Icons.wifi_tethering_rounded,
+              label: isOnline
+                  ? _locStr(context, 'online')
+                  : _locStr(context, 'offline'),
+              active: isOnline,
+            ),
+          ),
+          Container(width: 1, height: 40, color: Colors.white12),
+          Expanded(
+            child: _StatusBadgeItem(
+              icon: Icons.local_shipping_rounded,
+              label: vehicleLabel,
+              active: true,
+            ),
+          ),
+          Container(width: 1, height: 40, color: Colors.white12),
+          Expanded(
+            child: _StatusBadgeItem(
+              icon: isBusy
+                  ? Icons.work_history_rounded
+                  : Icons.check_circle_outline_rounded,
+              label: statusLabel,
+              active: !isBusy,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _locStr(BuildContext context, String key) {
+    final strings = context.strings;
+    if (key == 'online') return strings.online;
+    if (key == 'offline') return strings.offline;
+    return '';
+  }
+}
+
+class _StatusBadgeItem extends StatelessWidget {
+  const _StatusBadgeItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, size: 22, color: active ? Colors.white : Colors.white38),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: active ? Colors.white : Colors.white38,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Metric card ─────────────────────────────────────────────────────────────
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+  });
+
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Quick action card ────────────────────────────────────────────────────────
+
+class _QuickActionCard extends StatelessWidget {
+  const _QuickActionCard({
     required this.icon,
     required this.title,
+    required this.gradient,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
+  final Gradient gradient;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Ink(
-        padding: const EdgeInsets.all(18),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: const Color(0x1FFF7A1A),
-                borderRadius: BorderRadius.circular(14),
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: const Color(0xFFFF7A1A)),
+              child: Icon(icon, color: Colors.white, size: 20),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.white70,
+              size: 18,
             ),
           ],
         ),
