@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>التقرير التقني الشامل لمشروع توصيل الغاز</title>
+    <link rel="stylesheet" href="./project-report.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero__content">
+          <p class="eyebrow">تقرير تنفيذي وتقني</p>
+          <h1>التقرير الشامل لمشروع طلب وتوصيل أسطوانات الغاز</h1>
+          <p class="hero__summary">
+            هذا التقرير يلخص حالة المشروع الحالية، ما تم إنجازه فعليًا، ما
+            يحتاج تعديلًا، النواقص الموجودة، ووضع خطة عمل عملية مقسمة على كل
+            قسم من أقسام النظام: تطبيق العميل، تطبيق السائق، الـBackend ولوحة
+            التحكم، قاعدة البيانات، وطبقة التشغيل عبر Docker.
+          </p>
+          <div class="hero__badges">
+            <span class="badge badge--success">جاهز للتجربة المحلية</span>
+            <span class="badge">Flutter</span>
+            <span class="badge">Node.js + Express</span>
+            <span class="badge">Next.js Dashboard</span>
+            <span class="badge">PostgreSQL</span>
+            <span class="badge">Socket.IO</span>
+          </div>
+        </div>
+
+        <aside class="hero__panel">
+          <div class="panel-card">
+            <p class="panel-card__label">النتيجة الحالية</p>
+            <p class="panel-card__value">النواة الأساسية مكتملة</p>
+            <p class="panel-card__text">
+              المشروع يحتوي الآن على مسار تشغيل واضح من العميل إلى الخادم ثم
+              قاعدة البيانات، مع وجود تتبع جزئي للسائق، ولوحة إدارة، وبيئة
+              تشغيل محلية جاهزة عبر Docker.
+            </p>
+          </div>
+        </aside>
+      </header>
+
+      <main class="content">
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">ملخص سريع</p>
+            <h2>الوضع الحالي للمشروع</h2>
+            <p class="section__lead">
+              المشروع لم يعد فكرة أولية فقط، بل أصبح نظامًا متعدد الأطراف يعمل
+              محليًا، لكنه لا يزال يحتاج دورة تحسين وإنهاء قبل اعتباره نسخة
+              إنتاج كاملة.
+            </p>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric-card">
+              <span class="metric-card__value">4</span>
+              <h3>أقسام أساسية</h3>
+              <p>العميل، السائق، الـBackend مع لوحة الإدارة، وقاعدة البيانات.</p>
+            </article>
+            <article class="metric-card">
+              <span class="metric-card__value">3</span>
+              <h3>خدمات Docker</h3>
+              <p>الخدمات الحالية هي backend و postgres و pgAdmin.</p>
+            </article>
+            <article class="metric-card">
+              <span class="metric-card__value">6</span>
+              <h3>جداول رئيسية</h3>
+              <p>
+                customers و drivers و orders و system_settings و gas_products و
+                delivery_zones.
+              </p>
+            </article>
+            <article class="metric-card">
+              <span class="metric-card__value">9</span>
+              <h3>مجموعات API</h3>
+              <p>
+                تتوزع بين المصادقة والطلبات والسائقين والعملاء والإعدادات
+                والمنتجات والمناطق.
+              </p>
+            </article>
+          </div>
+
+          <div class="note-box">
+            <strong>ملاحظة مهمة:</strong>
+            الـBackend ولوحة الإدارة وقاعدة البيانات موجودة داخل هذا المستودع،
+            بينما تطبيق العميل وتطبيق السائق موجودان في مساحتين منفصلتين داخل
+            Android Studio Projects، لذلك التقرير يغطي المنظومة كاملة وليس
+            المستودع الحالي فقط.
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">تقسيم النظام</p>
+            <h2>أقسام المشروع وحالة كل قسم</h2>
+          </div>
+
+          <div class="cards-grid">
+            <article class="status-card">
+              <div class="status-card__head">
+                <h3>1. تطبيق العميل</h3>
+                <span class="status-pill status-pill--warn">مكتمل جزئيًا</span>
+              </div>
+              <p>
+                مبني بـ Flutter ويغطي المصادقة، عرض المنتجات، إنشاء الطلب،
+                الطلبات السابقة، وخريطة التتبع.
+              </p>
+              <ul class="feature-list">
+                <li>إنشاء الطلب وربطه مع API فعليًا تم.</li>
+                <li>قراءة موقع الجهاز الفعلي مع fallback للمحاكي تم.</li>
+                <li>تحديثات الطلب الحية موجودة في الـstate.</li>
+                <li>شاشة تتبع الطلب ما زالت تعرض موقع الجهاز بدل تتبع الطلب الحقيقي.</li>
+              </ul>
+            </article>
+
+            <article class="status-card">
+              <div class="status-card__head">
+                <h3>2. تطبيق السائق</h3>
+                <span class="status-pill status-pill--warn">مكتمل جزئيًا</span>
+              </div>
+              <p>
+                مبني بـ Flutter كذلك، ويغطي الطلبات المخصصة للسائق، مشاركة
+                الموقع، وخريطة التسليم النشطة.
+              </p>
+              <ul class="feature-list">
+                <li>إرسال موقع السائق إلى الخادم تم.</li>
+                <li>إظهار موقع العميل والسائق على الخريطة تم.</li>
+                <li>تهيئة Google Maps على Android تم تحسينها.</li>
+                <li>المسار الحالي خط مستقيم وليس مسار طرق حقيقي.</li>
+              </ul>
+            </article>
+
+            <article class="status-card">
+              <div class="status-card__head">
+                <h3>3. الـBackend ولوحة الإدارة</h3>
+                <span class="status-pill status-pill--good">الأساس موجود</span>
+              </div>
+              <p>
+                الخادم يشغل Express API و Next.js Dashboard و Socket.IO على نفس
+                الـserver.
+              </p>
+              <ul class="feature-list">
+                <li>الطلبات والمصادقة والمنتجات والمناطق والإعدادات موجودة.</li>
+                <li>لوحة الإدارة تحتوي صفحات dashboard و orders و drivers و zones.</li>
+                <li>البث اللحظي للأحداث موجود عبر Socket.IO.</li>
+                <li>هناك حاجة لتشديد العقد والـvalidation والمراقبة التشغيلية.</li>
+              </ul>
+            </article>
+
+            <article class="status-card">
+              <div class="status-card__head">
+                <h3>4. قاعدة البيانات والتشغيل</h3>
+                <span class="status-pill status-pill--good">تعمل محليًا</span>
+              </div>
+              <p>
+                PostgreSQL تعمل عبر Docker مع ملف تهيئة أولي، وpgAdmin متاح
+                للإدارة البصرية.
+              </p>
+              <ul class="feature-list">
+                <li>الجداول الأساسية موجودة مع seed data أولي.</li>
+                <li>فهارس أساسية موجودة للطلبات والعملاء والسائقين.</li>
+                <li>هناك ازدواج في حقول الإحداثيات داخل orders.</li>
+                <li>لا توجد بعد طبقة migrations وإدارة نسخ احتياطي احترافية.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">ما تم إنجازه</p>
+            <h2>الأعمال المنفذة حتى الآن</h2>
+          </div>
+
+          <div class="timeline">
+            <article class="timeline-card">
+              <h3>البنية الأساسية والتشغيل</h3>
+              <ul class="feature-list">
+                <li>إعداد Docker Compose لتشغيل backend و postgres و pgAdmin.</li>
+                <li>تجهيز Dockerfile لبناء وتشغيل Next.js و Node.js.</li>
+                <li>ربط متغيرات البيئة الأساسية للمنافذ وبيانات PostgreSQL.</li>
+              </ul>
+            </article>
+
+            <article class="timeline-card">
+              <h3>الخادم والـAPI</h3>
+              <ul class="feature-list">
+                <li>بناء Express app وربطه مع Next handler داخل نفس الخادم.</li>
+                <li>
+                  تجهيز مسارات API: auth و driver-auth و driver و orders و
+                  drivers و customers و settings و products و zones.
+                </li>
+                <li>إعداد بث حي للأحداث المتعلقة بالطلبات والسائقين.</li>
+              </ul>
+            </article>
+
+            <article class="timeline-card">
+              <h3>قاعدة البيانات</h3>
+              <ul class="feature-list">
+                <li>إنشاء جداول العملاء والسائقين والطلبات والإعدادات والمنتجات والمناطق.</li>
+                <li>إضافة بيانات أولية للنظام والمنتجات ومناطق التوصيل.</li>
+                <li>إضافة فهارس لتحسين الاستعلامات الأساسية.</li>
+              </ul>
+            </article>
+
+            <article class="timeline-card">
+              <h3>تطبيق العميل</h3>
+              <ul class="feature-list">
+                <li>ربط إنشاء الطلب الحقيقي مع `/api/orders`.</li>
+                <li>جلب الموقع الدقيق عبر geolocator و geocoding.</li>
+                <li>إضافة fallback خاص بالمحاكي داخل مسقط للاختبار.</li>
+                <li>تهيئة Google Maps قبل تشغيل التطبيق.</li>
+                <li>إصلاح مشكلة layout في شريط فلاتر الطلبات داخل شاشة طلباتي.</li>
+              </ul>
+            </article>
+
+            <article class="timeline-card">
+              <h3>تطبيق السائق</h3>
+              <ul class="feature-list">
+                <li>مشاركة موقع السائق الحي أثناء التوصيل.</li>
+                <li>عرض موقع العميل وموقع السائق في شاشة التسليم النشط.</li>
+                <li>تهيئة Android renderer للخرائط مع warmup.</li>
+                <li>دعم قراءة الإحداثيات من أكثر من شكل payload في نموذج الطلب.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">خدمة الموقع والخرائط</p>
+            <h2>تقييم وضع خدمة الـ Map حاليًا</h2>
+            <p class="section__lead">
+              خدمة الموقع موجودة ومفيدة بالفعل، لكنّها ليست مكتملة بعد كتجربة
+              تتبع تشغيلية كاملة من العميل إلى السائق إلى لوحة الإدارة.
+            </p>
+          </div>
+
+          <div class="split-grid">
+            <article class="analysis-card">
+              <h3>ما الذي يعمل الآن</h3>
+              <ul class="feature-list">
+                <li>العميل يلتقط موقعه ويرسل الإحداثيات عند إنشاء الطلب.</li>
+                <li>الخادم يستقبل الإحداثيات ويحفظها داخل الطلب.</li>
+                <li>السائق يرى موقع العميل على الخريطة.</li>
+                <li>السائق يرسل موقعه الحالي إلى الخادم أثناء التسليم.</li>
+                <li>تطبيق العميل يستطيع استقبال تحديثات موقع السائق في الـstate.</li>
+              </ul>
+            </article>
+
+            <article class="analysis-card">
+              <h3>أكبر نقص حالي</h3>
+              <ul class="feature-list">
+                <li>شاشة تتبع الطلب عند العميل لا تعرض الطلب الحقيقي بعد.</li>
+                <li>المسار في تطبيق السائق ليس route فعلي من الطرق.</li>
+                <li>حقول الإحداثيات في قاعدة البيانات مزدوجة وتحتاج توحيدًا.</li>
+                <li>مفاتيح Google Maps ما زالت تحتاج إنهاء صارم للإنتاج.</li>
+              </ul>
+            </article>
+
+            <article class="analysis-card">
+              <h3>الاقتراح الفني</h3>
+              <ul class="feature-list">
+                <li>الاستمرار مع Google Maps Platform كخيار أساسي.</li>
+                <li>إضافة Directions أو Routes API عند الانتقال لمسارات حقيقية.</li>
+                <li>توحيد عقد الإحداثيات على صيغة واحدة في الـAPI والـDB.</li>
+                <li>تحويل شاشة تتبع العميل لاستخدام orderById بدل موقع الجهاز.</li>
+                <li>إضافة مناطق توصيل دقيقة لاحقًا بدل فحص حدود عمان العامة.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">النواقص الحالية</p>
+            <h2>ما الذي يحتاج تعديلًا أو إنهاءً</h2>
+          </div>
+
+          <div class="gap-grid">
+            <article class="gap-card">
+              <h3>تطبيق العميل</h3>
+              <ul class="feature-list">
+                <li>ربط شاشة تتبع الطلب بالبيانات الحقيقية بدل موقع الجهاز الحالي.</li>
+                <li>تقوية تجربة إدارة العناوين والاعتماد على بيانات المناطق.</li>
+                <li>مراجعة fallback الخاص بالمحاكي حتى لا يختلط مع السلوك الإنتاجي.</li>
+              </ul>
+            </article>
+
+            <article class="gap-card">
+              <h3>تطبيق السائق</h3>
+              <ul class="feature-list">
+                <li>استبدال الـpolyline المستقيم بمسار حقيقي.</li>
+                <li>تحسين إدارة مشاركة الموقع عند تغير lifecycle أو انقطاع الشبكة.</li>
+                <li>تجهيز مفاتيح الخرائط للإنتاج بشكل آمن.</li>
+              </ul>
+            </article>
+
+            <article class="gap-card">
+              <h3>الـBackend</h3>
+              <ul class="feature-list">
+                <li>توحيد contract الإحداثيات والحقول الجغرافية.</li>
+                <li>تشديد التحقق من المدخلات والـauthorization في جميع المسارات.</li>
+                <li>إضافة اختبارات API ووثائق أوضح للعقود بين التطبيقات.</li>
+              </ul>
+            </article>
+
+            <article class="gap-card">
+              <h3>لوحة الإدارة</h3>
+              <ul class="feature-list">
+                <li>تعميق الربط التشغيلي مع حالات الطلبات والسائقين لحظيًا.</li>
+                <li>إضافة مؤشرات تشغيل حقيقية وتقارير يومية واضحة.</li>
+                <li>إظهار خرائط أو مواقع الطلبات داخل الواجهة الإدارية عند الحاجة.</li>
+              </ul>
+            </article>
+
+            <article class="gap-card">
+              <h3>4. التقارير والرقابة</h3>
+              <ul class="feature-list">
+                <li>تقارير يومية وأسبوعية عن الطلبات والإيرادات وأداء السائقين.</li>
+                <li>سجل عمليات audit log يوضح من غيّر ماذا ومتى.</li>
+                <li>لوحة KPI أوضح للإدارة العليا.</li>
+                <li>تصدير CSV أو Excel للطلبات والعملاء والسائقين.</li>
+              </ul>
+            </article>
+
+            <article class="gap-card">
+              <h3>قاعدة البيانات</h3>
+              <ul class="feature-list">
+                <li>إزالة الازدواج بين latitude/longitude و customer_latitude/customer_longitude.</li>
+                <li>اعتماد migrations منظمة بدل الاكتفاء بملف init واحد.</li>
+                <li>وضع سياسة backup و restore واختبارات بيانات.</li>
+              </ul>
+            </article>
+
+            <article class="gap-card">
+              <h3>DevOps والجودة</h3>
+              <ul class="feature-list">
+                <li>لا توجد بعد pipeline CI/CD كاملة.</li>
+                <li>المراقبة والـlogging والتنبيهات ليست مكتملة.</li>
+                <li>إعدادات الإنتاج وHTTPS وإدارة الأسرار تحتاج إنهاء.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">خطة العمل المقترحة</p>
+            <h2>خارطة تنفيذ عملية مقسمة حسب كل قسم</h2>
+          </div>
+
+          <div class="roadmap-grid">
+            <article class="roadmap-card">
+              <h3>قسم تطبيق العميل</h3>
+              <ol class="ordered-list">
+                <li>ربط شاشة تتبع الطلب ببيانات الطلب الفعلية وموقع السائق الحي.</li>
+                <li>تحسين شاشة العنوان الحالي وتجربة اختيار العنوان.</li>
+                <li>مراجعة حالات الفشل في الشبكة والموقع والخرائط.</li>
+                <li>إضافة اختبارات widget وintegration للمسارات الحرجة.</li>
+              </ol>
+            </article>
+
+            <article class="roadmap-card">
+              <h3>قسم تطبيق السائق</h3>
+              <ol class="ordered-list">
+                <li>إضافة route حقيقي و ETA أدق داخل شاشة التسليم.</li>
+                <li>تحسين استقرار مشاركة الموقع وإعادة الربط عند الانقطاع.</li>
+                <li>إضافة تجربة أوضح لحالات رفض الإذن أو توقف GPS.</li>
+                <li>إقفال ملف مفاتيح الخرائط وتجهيز build للإنتاج.</li>
+              </ol>
+            </article>
+
+            <article class="roadmap-card">
+              <h3>قسم الـBackend والـAPI</h3>
+              <ol class="ordered-list">
+                <li>توحيد payload الإحداثيات بشكل رسمي داخل order contract.</li>
+                <li>إضافة schema validation واضحة لكل endpoint مهم.</li>
+                <li>تحسين توثيق الأحداث اللحظية وقواعد تحديث حالة الطلب.</li>
+                <li>إضافة اختبارات وحدات واختبارات API آلية.</li>
+              </ol>
+            </article>
+
+            <article class="roadmap-card">
+              <h3>قسم لوحة الإدارة</h3>
+              <ol class="ordered-list">
+                <li>استكمال صفحات الإدارة التشغيلية وربطها ببيانات حية.</li>
+                <li>إضافة أدوات متابعة للطلبات والسائقين والمناطق.</li>
+                <li>إظهار تقارير تشغيلية ورسوم بيانية ومؤشرات أداء.</li>
+                <li>إضافة صلاحيات أدوار إدارية إن كان النظام سيكبر لاحقًا.</li>
+              </ol>
+            </article>
+
+            <article class="roadmap-card">
+              <h3>قسم قاعدة البيانات</h3>
+              <ol class="ordered-list">
+                <li>تنظيف schema الطلبات وتوحيد الحقول الجغرافية.</li>
+                <li>إدخال migrations رسمية وفهارس إضافية حسب الاستعلامات الفعلية.</li>
+                <li>فصل بيانات الإنتاج عن بيانات seed والتجارب.</li>
+                <li>إعداد سياسة backup دورية واستعادة.</li>
+              </ol>
+            </article>
+
+            <article class="roadmap-card">
+              <h3>قسم التشغيل والجودة</h3>
+              <ol class="ordered-list">
+                <li>إعداد بيئات development و staging و production بوضوح.</li>
+                <li>إضافة CI للبناء والتحليل والاختبارات.</li>
+                <li>إضافة logging و monitoring و alerts.</li>
+                <li>إغلاق الأسرار والمفاتيح وضبط HTTPS والنشر.</li>
+              </ol>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">ملفات ومحاور مهمة</p>
+            <h2>أهم الملفات والمواقع المرجعية</h2>
+          </div>
+
+          <div class="code-grid">
+            <article class="code-card">
+              <h3>داخل هذا المستودع</h3>
+              <ul class="code-list">
+                <li><code>docker-compose.yml</code></li>
+                <li><code>Dockerfile</code></li>
+                <li><code>src/server.js</code></li>
+                <li><code>src/app.js</code></li>
+                <li><code>src/controllers/orderController.js</code></li>
+                <li><code>src/models/orderModel.js</code></li>
+                <li><code>database/init.sql</code></li>
+                <li><code>app/(dashboard)/...</code></li>
+              </ul>
+            </article>
+
+            <article class="code-card">
+              <h3>تطبيق العميل</h3>
+              <ul class="code-list">
+                <li><code>customer_app/lib/core/device/device_location_service.dart</code></li>
+                <li><code>customer_app/lib/core/maps/google_maps_bootstrap.dart</code></li>
+                <li><code>customer_app/lib/data/services/customer_order_service.dart</code></li>
+                <li><code>customer_app/lib/shared/state/customer_app_controller.dart</code></li>
+                <li><code>customer_app/lib/features/orders/presentation/order_tracking_screen.dart</code></li>
+              </ul>
+            </article>
+
+            <article class="code-card">
+              <h3>تطبيق السائق</h3>
+              <ul class="code-list">
+                <li><code>driver_app/lib/main.dart</code></li>
+                <li><code>driver_app/lib/config/environment.dart</code></li>
+                <li><code>driver_app/lib/features/tracking/presentation/tracking_controller.dart</code></li>
+                <li><code>driver_app/lib/features/tracking/presentation/screens/active_delivery_screen.dart</code></li>
+                <li><code>driver_app/lib/features/orders/data/orders_repository.dart</code></li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">التشغيل الحالي</p>
+            <h2>الخدمات والمنافذ المتوقعة</h2>
+          </div>
+
+          <div class="ops-grid">
+            <article class="ops-card">
+              <h3>Backend</h3>
+              <p>يعمل على المنفذ المحدد في <code>PORT</code> داخل ملف البيئة.</p>
+            </article>
+            <article class="ops-card">
+              <h3>PostgreSQL</h3>
+              <p>يعمل محليًا على المنفذ <code>5432</code>.</p>
+            </article>
+            <article class="ops-card">
+              <h3>pgAdmin</h3>
+              <p>يعمل على المنفذ المحدد في <code>PGADMIN_PORT</code>.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section section--accent">
+          <div class="section__header">
+            <p class="section__eyebrow">الخلاصة</p>
+            <h2>التقييم النهائي</h2>
+          </div>
+
+          <div class="summary-box">
+            <p>
+              المشروع الآن يملك أساسًا قويًا: تطبيق عميل يرسل الطلبات، تطبيق
+              سائق يتابع التسليم، Backend موحد مع لوحة إدارة، وقاعدة بيانات
+              جاهزة محليًا. أكبر أولوية عملية تالية هي إكمال تجربة التتبع عند
+              العميل وتوحيد عقد الإحداثيات، ثم الانتقال إلى تحسين الجودة
+              التشغيلية والاختبارات وبيئة الإنتاج.
+            </p>
+            <p>
+              باختصار: ما تم إنجازه جيد وقابل للبناء عليه، لكن قبل الإطلاق
+              الرسمي ما زال هناك عمل واضح ومحدد، والخطة الموجودة في هذا التقرير
+              تصلح كخارطة تنفيذ مباشرة للمرحلة القادمة.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تقرير تحليل مشروع Gas Delivery Platform</title>
+  <link rel="stylesheet" href="project-analysis-report.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="hero">
+    <div class="hero-bg"></div>
+    <div class="container hero-content">
+      <div class="hero-badge">تقرير تحليلي شامل</div>
+      <h1>Gas Delivery Platform</h1>
+      <p class="hero-subtitle">منصة متكاملة لتوصيل أسطوانات الغاز في سلطنة عُمان</p>
+      <div class="hero-meta">
+        <span>تاريخ التقرير: 6 أبريل 2026</span>
+        <span class="dot"></span>
+        <span>الإصدار: 1.0.0</span>
+        <span class="dot"></span>
+        <span>~315 ملف</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="nav-bar">
+    <div class="container">
+      <ul class="nav-list">
+        <li><a href="#overview">نظرة عامة</a></li>
+        <li><a href="#architecture">الهيكلية</a></li>
+        <li><a href="#tech-stack">التقنيات</a></li>
+        <li><a href="#backend">الخادم</a></li>
+        <li><a href="#frontend">الواجهة</a></li>
+        <li><a href="#database">قاعدة البيانات</a></li>
+        <li><a href="#mobile">التطبيقات</a></li>
+        <li><a href="#realtime">الوقت الحقيقي</a></li>
+        <li><a href="#deployment">النشر</a></li>
+        <li><a href="#analysis">التحليل</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container">
+
+    <!-- Section 1: Overview -->
+    <section id="overview" class="section">
+      <div class="section-header">
+        <span class="section-number">01</span>
+        <h2>نظرة عامة على المشروع</h2>
+      </div>
+      <div class="card">
+        <p class="lead">
+          مشروع <strong>Gas Delivery Platform</strong> هو منصة متكاملة لإدارة وتوصيل أسطوانات الغاز في سلطنة عُمان. يتكون المشروع من أربعة مكونات رئيسية تعمل معاً لتوفير تجربة شاملة لجميع الأطراف.
+        </p>
+        <div class="grid-4">
+          <div class="stat-card stat-blue">
+            <div class="stat-icon">🖥️</div>
+            <div class="stat-value">لوحة تحكم</div>
+            <div class="stat-label">Next.js Admin Dashboard</div>
+            <p class="stat-desc">لوحة تحكم ثنائية اللغة (عربي/إنجليزي) لإدارة الطلبات والسائقين والمناطق والمنتجات والإعدادات</p>
+          </div>
+          <div class="stat-card stat-green">
+            <div class="stat-icon">⚙️</div>
+            <div class="stat-value">خادم API</div>
+            <div class="stat-label">Express + PostgreSQL</div>
+            <p class="stat-desc">واجهة برمجية RESTful مع تحديثات لحظية عبر Socket.IO وقاعدة بيانات PostgreSQL</p>
+          </div>
+          <div class="stat-card stat-purple">
+            <div class="stat-icon">📱</div>
+            <div class="stat-value">تطبيق العميل</div>
+            <div class="stat-label">Flutter Customer App</div>
+            <p class="stat-desc">تطبيق موبايل للعملاء لطلب الغاز وتتبع التوصيل مباشرة على الخريطة</p>
+          </div>
+          <div class="stat-card stat-orange">
+            <div class="stat-icon">🚗</div>
+            <div class="stat-value">تطبيق السائق</div>
+            <div class="stat-label">Flutter Driver App</div>
+            <p class="stat-desc">تطبيق للسائقين لإدارة الطلبات والتوصيل والأرباح مع خرائط تفاعلية</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Architecture -->
+    <section id="architecture" class="section">
+      <div class="section-header">
+        <span class="section-number">02</span>
+        <h2>هيكلية المشروع</h2>
+      </div>
+      <div class="card">
+        <h3>بنية المجلدات الرئيسية</h3>
+        <div class="tree-container">
+<pre class="file-tree">
+gas-main/
+├── app/                          <span class="tree-comment"># صفحات Next.js (App Router)</span>
+│   ├── globals.css
+│   ├── layout.js                 <span class="tree-comment"># التخطيط الرئيسي مع دعم RTL</span>
+│   ├── page.js                   <span class="tree-comment"># الصفحة الرئيسية</span>
+│   └── (dashboard)/              <span class="tree-comment"># مجموعة المسارات المحمية</span>
+│       ├── layout.js
+│       ├── dashboard/page.jsx
+│       ├── drivers/page.jsx
+│       ├── map/page.jsx
+│       ├── orders/page.jsx
+│       ├── pricing/page.jsx
+│       ├── reports/page.jsx
+│       ├── settings/page.jsx
+│       ├── users/page.jsx
+│       └── zones/page.jsx
+├── components/                   <span class="tree-comment"># مكونات React</span>
+│   ├── dashboard/                <span class="tree-comment"># بطاقات الإحصائيات والرسوم</span>
+│   ├── drivers/                  <span class="tree-comment"># جداول ونماذج السائقين</span>
+│   ├── layout/                   <span class="tree-comment"># الشريط الجانبي والعلوي</span>
+│   ├── orders/                   <span class="tree-comment"># جدول الطلبات وتفاصيلها</span>
+│   ├── pricing/                  <span class="tree-comment"># جدول الأسعار</span>
+│   ├── providers/                <span class="tree-comment"># Context Providers</span>
+│   ├── settings/                 <span class="tree-comment"># نموذج الإعدادات</span>
+│   ├── shared/                   <span class="tree-comment"># عناصر مشتركة</span>
+│   ├── users/                    <span class="tree-comment"># جدول المستخدمين</span>
+│   └── zones/                    <span class="tree-comment"># جدول المناطق</span>
+├── data/                         <span class="tree-comment"># بيانات وهمية وترجمات</span>
+├── hooks/                        <span class="tree-comment"># React Custom Hooks</span>
+├── lib/                          <span class="tree-comment"># أدوات مساعدة</span>
+├── services/                     <span class="tree-comment"># عميل Axios + Socket.IO</span>
+├── src/                          <span class="tree-comment"># خادم Express API</span>
+│   ├── server.js                 <span class="tree-comment"># نقطة الدخول الرئيسية</span>
+│   ├── app.js                    <span class="tree-comment"># إعداد Express</span>
+│   ├── config/                   <span class="tree-comment"># إعدادات DB + Socket</span>
+│   ├── controllers/              <span class="tree-comment"># 10 وحدات تحكم</span>
+│   ├── middleware/                <span class="tree-comment"># 4 وسائط</span>
+│   ├── models/                   <span class="tree-comment"># 6 نماذج بيانات</span>
+│   ├── routes/                   <span class="tree-comment"># 10 مسارات API</span>
+│   ├── services/                 <span class="tree-comment"># 3 خدمات</span>
+│   └── utils/                    <span class="tree-comment"># أدوات مساعدة</span>
+├── database/
+│   └── init.sql                  <span class="tree-comment"># مخطط قاعدة البيانات</span>
+├── apps/
+│   ├── customer_app/             <span class="tree-comment"># تطبيق Flutter للعميل (42 ملف Dart)</span>
+│   └── driver_app/               <span class="tree-comment"># تطبيق Flutter للسائق (57 ملف Dart)</span>
+├── Dockerfile
+├── docker-compose.yml
+└── package.json
+</pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>نمط الهيكلية المعمارية</h3>
+        <div class="arch-grid">
+          <div class="arch-item">
+            <h4>الواجهة الأمامية (Web)</h4>
+            <ul>
+              <li><strong>Next.js App Router</strong> مع Route Groups</li>
+              <li><strong>React Context</strong> لإدارة الحالة</li>
+              <li><strong>Custom Hooks</strong> لمنطق الأعمال</li>
+              <li>نمط <strong>Component-Based Architecture</strong></li>
+            </ul>
+          </div>
+          <div class="arch-item">
+            <h4>الخادم (Backend)</h4>
+            <ul>
+              <li>نمط <strong>Route → Controller → Model</strong></li>
+              <li><strong>Middleware</strong> للمصادقة ومعالجة الأخطاء</li>
+              <li><strong>Service Layer</strong> للمنطق المعقد</li>
+              <li><strong>Connection Pool</strong> لقاعدة البيانات</li>
+            </ul>
+          </div>
+          <div class="arch-item">
+            <h4>تطبيقات Flutter</h4>
+            <ul>
+              <li>نمط <strong>Feature-First</strong> Architecture</li>
+              <li><strong>Riverpod</strong> لإدارة الحالة</li>
+              <li>فصل <strong>Data / Presentation</strong></li>
+              <li><strong>Repository Pattern</strong> لطبقة البيانات</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Tech Stack -->
+    <section id="tech-stack" class="section">
+      <div class="section-header">
+        <span class="section-number">03</span>
+        <h2>التقنيات المستخدمة</h2>
+      </div>
+
+      <div class="card">
+        <h3>المنصة الويب (Admin + API)</h3>
+        <div class="deps-grid">
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Next.js</span>
+              <span class="dep-version">^15.2.0</span>
+            </div>
+            <p>إطار عمل React للواجهة الأمامية مع App Router</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">React</span>
+              <span class="dep-version">^19.0.0</span>
+            </div>
+            <p>مكتبة بناء واجهات المستخدم</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Express</span>
+              <span class="dep-version">^4.21.2</span>
+            </div>
+            <p>إطار عمل خادم Node.js</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">PostgreSQL</span>
+              <span class="dep-version">16</span>
+            </div>
+            <p>قاعدة بيانات علائقية (عبر pg ^8.13.1)</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Socket.IO</span>
+              <span class="dep-version">^4.8.1</span>
+            </div>
+            <p>تحديثات لحظية ثنائية الاتجاه</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Tailwind CSS</span>
+              <span class="dep-version">^3.4.17</span>
+            </div>
+            <p>إطار تنسيق CSS مرن</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Axios</span>
+              <span class="dep-version">^1.8.2</span>
+            </div>
+            <p>عميل HTTP للطلبات</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Lucide React</span>
+              <span class="dep-version">^0.474.0</span>
+            </div>
+            <p>مكتبة أيقونات SVG</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Docker</span>
+              <span class="dep-version">Compose</span>
+            </div>
+            <p>حاويات للنشر (node:20-alpine)</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>تطبيقات Flutter المحمولة</h3>
+        <div class="deps-grid">
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Flutter / Dart</span>
+              <span class="dep-version">SDK ^3.10.3</span>
+            </div>
+            <p>إطار عمل التطبيقات المحمولة</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Riverpod</span>
+              <span class="dep-version">^3.0.3 / ^2.6.1</span>
+            </div>
+            <p>إدارة الحالة (نسختان مختلفتان)</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Dio</span>
+              <span class="dep-version">^5.9.0</span>
+            </div>
+            <p>عميل HTTP متقدم</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">flutter_map</span>
+              <span class="dep-version">^8.2.2</span>
+            </div>
+            <p>خرائط تفاعلية (OpenStreetMap)</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">GoRouter</span>
+              <span class="dep-version">^16.3.0</span>
+            </div>
+            <p>توجيه تطبيق العميل</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Geolocator</span>
+              <span class="dep-version">^14.0.2</span>
+            </div>
+            <p>خدمات تحديد الموقع</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Socket.IO Client</span>
+              <span class="dep-version">^3.1.2</span>
+            </div>
+            <p>اتصال لحظي مع الخادم</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Secure Storage</span>
+              <span class="dep-version">^9.2.4</span>
+            </div>
+            <p>تخزين آمن (تطبيق السائق)</p>
+          </div>
+          <div class="dep-card">
+            <div class="dep-header">
+              <span class="dep-name">Google Fonts</span>
+              <span class="dep-version">^6.3.2</span>
+            </div>
+            <p>خطوط عربية وإنجليزية</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>أدوات التطوير</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>الأداة</th>
+              <th>الإصدار</th>
+              <th>الوظيفة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Node.js</td><td>&gt;= 20</td><td>بيئة تشغيل الخادم</td></tr>
+            <tr><td>Nodemon</td><td>^3.1.7</td><td>إعادة تشغيل تلقائي أثناء التطوير</td></tr>
+            <tr><td>cross-env</td><td>^7.0.3</td><td>متغيرات بيئة عبر أنظمة التشغيل</td></tr>
+            <tr><td>PostCSS</td><td>^8.5.3</td><td>معالجة CSS</td></tr>
+            <tr><td>Autoprefixer</td><td>^10.4.20</td><td>إضافة بادئات المتصفحات تلقائياً</td></tr>
+            <tr><td>pgAdmin 4</td><td>8.14</td><td>إدارة قاعدة البيانات (Docker)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Section 4: Backend API -->
+    <section id="backend" class="section">
+      <div class="section-header">
+        <span class="section-number">04</span>
+        <h2>الخادم و API</h2>
+      </div>
+
+      <div class="card">
+        <h3>نقاط الدخول</h3>
+        <div class="info-box">
+          <p><strong>server.js:</strong> يقوم بتهيئة قاعدة البيانات، تحضير Next.js، إنشاء تطبيق Express، تفعيل Socket.IO، وتشغيل خدمة إيفاد السائقين.</p>
+          <p><strong>app.js:</strong> يُعدّ Express مع CORS وBody Parser، ويربط 10 مسارات API مختلفة، ثم يُفوّض باقي الطلبات لـ Next.js.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>مسارات API (Routes)</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>المسار</th>
+              <th>الملف</th>
+              <th>الوظيفة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>/api/health</code></td><td>app.js</td><td>فحص صحة الخادم</td></tr>
+            <tr><td><code>/api/auth</code></td><td>authRoutes.js</td><td>مصادقة لوحة التحكم (Admin)</td></tr>
+            <tr><td><code>/api/driver-auth</code></td><td>driverAuthRoutes.js</td><td>مصادقة السائقين</td></tr>
+            <tr><td><code>/api/driver</code></td><td>driverAppRoutes.js</td><td>عمليات تطبيق السائق</td></tr>
+            <tr><td><code>/api/orders</code></td><td>orderRoutes.js</td><td>إدارة الطلبات (CRUD)</td></tr>
+            <tr><td><code>/api/routes</code></td><td>routeRoutes.js</td><td>مسارات التوصيل</td></tr>
+            <tr><td><code>/api/drivers</code></td><td>driverRoutes.js</td><td>إدارة السائقين</td></tr>
+            <tr><td><code>/api/customers</code></td><td>customerRoutes.js</td><td>إدارة العملاء</td></tr>
+            <tr><td><code>/api/settings</code></td><td>settingsRoutes.js</td><td>إعدادات النظام</td></tr>
+            <tr><td><code>/api/products</code></td><td>productRoutes.js</td><td>منتجات الغاز</td></tr>
+            <tr><td><code>/api/zones</code></td><td>zoneRoutes.js</td><td>مناطق التوصيل</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>طبقات الخادم</h3>
+        <div class="layer-grid">
+          <div class="layer-item">
+            <h4>Controllers (10)</h4>
+            <ul class="compact-list">
+              <li>authController</li>
+              <li>customerController</li>
+              <li>driverAppController</li>
+              <li>driverAuthController</li>
+              <li>driverController</li>
+              <li>orderController</li>
+              <li>productController</li>
+              <li>routeController</li>
+              <li>settingsController</li>
+              <li>zoneController</li>
+            </ul>
+          </div>
+          <div class="layer-item">
+            <h4>Models (6)</h4>
+            <ul class="compact-list">
+              <li>customerModel</li>
+              <li>driverModel</li>
+              <li>orderModel</li>
+              <li>productModel</li>
+              <li>settingsModel</li>
+              <li>zoneModel</li>
+            </ul>
+          </div>
+          <div class="layer-item">
+            <h4>Middleware (4)</h4>
+            <ul class="compact-list">
+              <li>customerAuth</li>
+              <li>driverAuth</li>
+              <li>notFound</li>
+              <li>errorHandler</li>
+            </ul>
+          </div>
+          <div class="layer-item">
+            <h4>Services (3)</h4>
+            <ul class="compact-list">
+              <li>orderRealtimeService</li>
+              <li>driverDispatchService</li>
+              <li>trackingRouteService</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Frontend -->
+    <section id="frontend" class="section">
+      <div class="section-header">
+        <span class="section-number">05</span>
+        <h2>الواجهة الأمامية (لوحة التحكم)</h2>
+      </div>
+
+      <div class="card">
+        <h3>صفحات لوحة التحكم</h3>
+        <div class="grid-3">
+          <div class="page-card">
+            <div class="page-icon">📊</div>
+            <h4>Dashboard</h4>
+            <p>لوحة معلومات رئيسية مع بطاقات إحصائية، آخر الطلبات، نظرة على السائقين، وطلبات مباشرة</p>
+          </div>
+          <div class="page-card">
+            <div class="page-icon">📦</div>
+            <h4>Orders</h4>
+            <p>إدارة كاملة للطلبات مع جدول تفاعلي، فلترة، بحث، وعرض تفاصيل كل طلب</p>
+          </div>
+          <div class="page-card">
+            <div class="page-icon">🚗</div>
+            <h4>Drivers</h4>
+            <p>إدارة السائقين مع جدول ونموذج إضافة سائق جديد</p>
+          </div>
+          <div class="page-card">
+            <div class="page-icon">👥</div>
+            <h4>Users</h4>
+            <p>إدارة حسابات العملاء المسجلين</p>
+          </div>
+          <div class="page-card">
+            <div class="page-icon">🗺️</div>
+            <h4>Map</h4>
+            <p>خريطة تفاعلية لتتبع المواقع والتوصيلات</p>
+          </div>
+          <div class="page-card">
+            <div class="page-icon">📍</div>
+            <h4>Zones</h4>
+            <p>إدارة مناطق التوصيل ورسوم كل منطقة</p>
+          </div>
+          <div class="page-card">
+            <div class="page-icon">💰</div>
+            <h4>Pricing</h4>
+            <p>إدارة أسعار المنتجات ورسوم التوصيل</p>
+          </div>
+          <div class="page-card">
+            <div class="page-icon">📈</div>
+            <h4>Reports</h4>
+            <p>تقارير وإحصائيات العمليات</p>
+          </div>
+          <div class="page-card">
+            <div class="page-icon">⚙️</div>
+            <h4>Settings</h4>
+            <p>إعدادات النظام: اسم النظام، رقم الدعم، العملة، وضع الصيانة، والمزيد</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>المكونات المشتركة (23 مكون)</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>المجلد</th>
+              <th>المكونات</th>
+              <th>الوظيفة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>layout/</code></td>
+              <td>sidebar, topbar, dashboard-shell</td>
+              <td>الهيكل العام للوحة التحكم</td>
+            </tr>
+            <tr>
+              <td><code>dashboard/</code></td>
+              <td>stats-card, recent-orders-card, drivers-overview-card, live-order-card</td>
+              <td>بطاقات لوحة المعلومات</td>
+            </tr>
+            <tr>
+              <td><code>orders/</code></td>
+              <td>orders-table, order-details-panel</td>
+              <td>عرض وتفاصيل الطلبات</td>
+            </tr>
+            <tr>
+              <td><code>drivers/</code></td>
+              <td>drivers-table, driver-create-form</td>
+              <td>إدارة السائقين</td>
+            </tr>
+            <tr>
+              <td><code>providers/</code></td>
+              <td>app-providers, i18n-provider, orders-provider</td>
+              <td>موفرو السياق (Context)</td>
+            </tr>
+            <tr>
+              <td><code>shared/</code></td>
+              <td>error-state, loading-spinner, empty-state, search-filter-bar, status-badge</td>
+              <td>عناصر واجهة مشتركة</td>
+            </tr>
+            <tr>
+              <td><code>settings/</code></td>
+              <td>settings-form</td>
+              <td>نموذج الإعدادات</td>
+            </tr>
+            <tr>
+              <td><code>pricing/</code></td>
+              <td>pricing-table</td>
+              <td>جدول الأسعار</td>
+            </tr>
+            <tr>
+              <td><code>zones/</code></td>
+              <td>zones-table</td>
+              <td>جدول المناطق</td>
+            </tr>
+            <tr>
+              <td><code>users/</code></td>
+              <td>users-table</td>
+              <td>جدول المستخدمين</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>ميزات الواجهة</h3>
+        <div class="feature-list">
+          <div class="feature-item">
+            <span class="feature-check">✓</span>
+            <div>
+              <strong>ثنائية اللغة (عربي/إنجليزي)</strong>
+              <p>تبديل اللغة عبر Cookie مع دعم كامل لـ RTL</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-check">✓</span>
+            <div>
+              <strong>خطوط مخصصة</strong>
+              <p>Cairo للعربية و Plus Jakarta Sans للإنجليزية</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-check">✓</span>
+            <div>
+              <strong>تحديثات لحظية</strong>
+              <p>تحديث الطلبات والإحصائيات مباشرة عبر Socket.IO</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-check">✓</span>
+            <div>
+              <strong>تصميم متجاوب</strong>
+              <p>واجهة تعمل على جميع أحجام الشاشات مع Tailwind CSS</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-check">✓</span>
+            <div>
+              <strong>إشعارات Toast</strong>
+              <p>إشعارات فورية باستخدام react-hot-toast</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Database -->
+    <section id="database" class="section">
+      <div class="section-header">
+        <span class="section-number">06</span>
+        <h2>قاعدة البيانات</h2>
+      </div>
+
+      <div class="card">
+        <h3>مخطط الجداول</h3>
+        <div class="db-grid">
+          <div class="db-table-card">
+            <div class="db-table-header">customers</div>
+            <ul class="db-columns">
+              <li><span class="col-key">PK</span> id <span class="col-type">SERIAL</span></li>
+              <li>full_name <span class="col-type">TEXT NOT NULL</span></li>
+              <li>phone <span class="col-type">TEXT UNIQUE</span></li>
+              <li>email <span class="col-type">TEXT UNIQUE</span></li>
+              <li>password_hash <span class="col-type">TEXT NOT NULL</span></li>
+              <li>avatar_url <span class="col-type">TEXT</span></li>
+              <li>default_address_id <span class="col-type">TEXT</span></li>
+              <li>session_token <span class="col-type">TEXT</span></li>
+              <li>created_at <span class="col-type">TIMESTAMP</span></li>
+              <li>updated_at <span class="col-type">TIMESTAMP</span></li>
+            </ul>
+          </div>
+
+          <div class="db-table-card">
+            <div class="db-table-header">drivers</div>
+            <ul class="db-columns">
+              <li><span class="col-key">PK</span> id <span class="col-type">SERIAL</span></li>
+              <li>name <span class="col-type">TEXT NOT NULL</span></li>
+              <li>phone <span class="col-type">TEXT UNIQUE</span></li>
+              <li>status <span class="col-type">TEXT DEFAULT 'offline'</span></li>
+              <li>availability <span class="col-type">TEXT DEFAULT 'available'</span></li>
+              <li>current_location <span class="col-type">TEXT</span></li>
+              <li>last_seen_at <span class="col-type">TIMESTAMP</span></li>
+              <li>created_at <span class="col-type">TIMESTAMP</span></li>
+              <li>updated_at <span class="col-type">TIMESTAMP</span></li>
+            </ul>
+          </div>
+
+          <div class="db-table-card db-table-wide">
+            <div class="db-table-header">orders</div>
+            <ul class="db-columns">
+              <li><span class="col-key">PK</span> id <span class="col-type">SERIAL</span></li>
+              <li><span class="col-key">FK</span> customer_id <span class="col-type">→ customers(id)</span></li>
+              <li><span class="col-key">FK</span> assigned_driver_id <span class="col-type">→ drivers(id)</span></li>
+              <li>name, phone, location <span class="col-type">TEXT NOT NULL</span></li>
+              <li>address_text, address_full <span class="col-type">TEXT</span></li>
+              <li>gas_type <span class="col-type">TEXT NOT NULL</span></li>
+              <li>quantity <span class="col-type">INTEGER DEFAULT 1</span></li>
+              <li>payment_method <span class="col-type">TEXT DEFAULT 'cash_on_delivery'</span></li>
+              <li>total_amount <span class="col-type">NUMERIC(10,3)</span></li>
+              <li>status <span class="col-type">TEXT DEFAULT 'pending'</span></li>
+              <li>driver_stage <span class="col-type">TEXT DEFAULT 'new_order'</span></li>
+              <li>latitude, longitude <span class="col-type">DOUBLE PRECISION</span></li>
+              <li>customer_latitude, customer_longitude <span class="col-type">DOUBLE PRECISION</span></li>
+              <li>notes, preferred_delivery_window <span class="col-type">TEXT</span></li>
+              <li>accepted_at, delivered_at, cancelled_at <span class="col-type">TIMESTAMP</span></li>
+            </ul>
+          </div>
+
+          <div class="db-table-card">
+            <div class="db-table-header">system_settings</div>
+            <ul class="db-columns">
+              <li><span class="col-key">PK</span> id <span class="col-type">INTEGER DEFAULT 1</span></li>
+              <li>system_name <span class="col-type">TEXT 'سوبر غاز'</span></li>
+              <li>support_phone <span class="col-type">TEXT</span></li>
+              <li>default_language <span class="col-type">TEXT 'ar'</span></li>
+              <li>currency_code <span class="col-type">TEXT 'OMR'</span></li>
+              <li>maintenance_mode <span class="col-type">BOOLEAN</span></li>
+              <li>auto_assign_drivers <span class="col-type">BOOLEAN</span></li>
+              <li>order_intake_enabled <span class="col-type">BOOLEAN</span></li>
+              <li>default_delivery_fee <span class="col-type">NUMERIC(10,3)</span></li>
+              <li>system_message <span class="col-type">TEXT</span></li>
+            </ul>
+          </div>
+
+          <div class="db-table-card">
+            <div class="db-table-header">gas_products</div>
+            <ul class="db-columns">
+              <li><span class="col-key">PK</span> id <span class="col-type">SERIAL</span></li>
+              <li>code <span class="col-type">TEXT UNIQUE</span></li>
+              <li>name_ar, name_en <span class="col-type">TEXT NOT NULL</span></li>
+              <li>size_label <span class="col-type">TEXT NOT NULL</span></li>
+              <li>price <span class="col-type">NUMERIC(10,3)</span></li>
+              <li>delivery_fee <span class="col-type">NUMERIC(10,3)</span></li>
+              <li>is_available <span class="col-type">BOOLEAN</span></li>
+              <li>operational_notes <span class="col-type">TEXT</span></li>
+            </ul>
+          </div>
+
+          <div class="db-table-card">
+            <div class="db-table-header">delivery_zones</div>
+            <ul class="db-columns">
+              <li><span class="col-key">PK</span> id <span class="col-type">SERIAL</span></li>
+              <li>code <span class="col-type">TEXT UNIQUE</span></li>
+              <li>name_ar, name_en <span class="col-type">TEXT NOT NULL</span></li>
+              <li>governorate <span class="col-type">TEXT NOT NULL</span></li>
+              <li>delivery_fee <span class="col-type">NUMERIC(10,3)</span></li>
+              <li>estimated_delivery_minutes <span class="col-type">INTEGER</span></li>
+              <li>is_active <span class="col-type">BOOLEAN</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>البيانات الأولية</h3>
+        <div class="grid-2">
+          <div>
+            <h4>منتجات الغاز (3 منتجات)</h4>
+            <table class="data-table">
+              <thead>
+                <tr><th>المنتج</th><th>الحجم</th><th>السعر (ر.ع)</th><th>رسوم التوصيل</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>أسطوانة منزلية</td><td>20L</td><td>4.500</td><td>1.250</td></tr>
+                <tr><td>أسطوانة تجارية</td><td>35L</td><td>7.250</td><td>1.500</td></tr>
+                <tr><td>أسطوانة احتياطية</td><td>15L</td><td>3.850</td><td>1.250</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h4>مناطق التوصيل (5 مناطق)</h4>
+            <table class="data-table">
+              <thead>
+                <tr><th>المنطقة</th><th>المحافظة</th><th>الرسوم</th><th>الوقت (دقيقة)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>مسقط</td><td>محافظة مسقط</td><td>1.250</td><td>30</td></tr>
+                <tr><td>الخوير</td><td>محافظة مسقط</td><td>1.250</td><td>25</td></tr>
+                <tr><td>السيب</td><td>محافظة مسقط</td><td>1.500</td><td>35</td></tr>
+                <tr><td>صحار</td><td>شمال الباطنة</td><td>2.000</td><td>45</td></tr>
+                <tr><td>صلالة</td><td>ظفار</td><td>2.250</td><td>50</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>الفهارس (Indexes)</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>الفهرس</th><th>الجدول</th><th>الأعمدة</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>idx_customers_session_token</td><td>customers</td><td>session_token (UNIQUE, WHERE NOT NULL)</td></tr>
+            <tr><td>idx_orders_customer_id</td><td>orders</td><td>customer_id</td></tr>
+            <tr><td>idx_orders_status</td><td>orders</td><td>status</td></tr>
+            <tr><td>idx_orders_assigned_driver_id</td><td>orders</td><td>assigned_driver_id</td></tr>
+            <tr><td>idx_drivers_status_availability</td><td>drivers</td><td>status, availability</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Section 7: Mobile Apps -->
+    <section id="mobile" class="section">
+      <div class="section-header">
+        <span class="section-number">07</span>
+        <h2>تطبيقات الموبايل (Flutter)</h2>
+      </div>
+
+      <div class="card">
+        <h3>تطبيق العميل (Customer App)</h3>
+        <div class="app-overview">
+          <div class="app-meta">
+            <span class="app-badge">42 ملف Dart</span>
+            <span class="app-badge">Android + iOS</span>
+            <span class="app-badge">Riverpod 3.x</span>
+            <span class="app-badge">GoRouter</span>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <h4>الشاشات الرئيسية</h4>
+            <ul class="feature-list-compact">
+              <li><strong>Splash Screen</strong> — شاشة البداية</li>
+              <li><strong>Auth Screen</strong> — تسجيل الدخول / إنشاء حساب</li>
+              <li><strong>Home Screen</strong> — الصفحة الرئيسية</li>
+              <li><strong>Create Order</strong> — إنشاء طلب جديد</li>
+              <li><strong>My Orders</strong> — طلباتي السابقة</li>
+              <li><strong>Order Tracking</strong> — تتبع الطلب على الخريطة</li>
+              <li><strong>Profile</strong> — الملف الشخصي</li>
+            </ul>
+          </div>
+          <div>
+            <h4>البنية الداخلية</h4>
+            <ul class="feature-list-compact">
+              <li><strong>core/</strong> — network, widgets, device, constants</li>
+              <li><strong>data/</strong> — services (API), mock data</li>
+              <li><strong>features/</strong> — splash, auth, home, orders, profile</li>
+              <li><strong>shared/</strong> — models, state, localization</li>
+              <li><strong>app/</strong> — router, theme, main app widget</li>
+            </ul>
+            <h4 style="margin-top: 16px;">النماذج (Models)</h4>
+            <ul class="feature-list-compact">
+              <li>OrderModel, GasProduct, UserProfile</li>
+              <li>AddressModel, DriverSnapshot</li>
+              <li>DeliveryRoute, TrackingStep</li>
+              <li>TrackingRoutePoint, PaymentMethod</li>
+              <li>OrderStatus, AppRuntimeSettings</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>تطبيق السائق (Driver App)</h3>
+        <div class="app-overview">
+          <div class="app-meta">
+            <span class="app-badge">57 ملف Dart</span>
+            <span class="app-badge">Android + iOS + Windows + Web</span>
+            <span class="app-badge">Riverpod 2.x</span>
+            <span class="app-badge">Secure Storage</span>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <h4>الشاشات والميزات</h4>
+            <ul class="feature-list-compact">
+              <li><strong>Splash / Login</strong> — المصادقة والدخول</li>
+              <li><strong>Home Dashboard</strong> — لوحة معلومات السائق</li>
+              <li><strong>Incoming Orders</strong> — الطلبات الواردة</li>
+              <li><strong>Order Details</strong> — تفاصيل الطلب</li>
+              <li><strong>Order History</strong> — سجل الطلبات</li>
+              <li><strong>Active Delivery</strong> — التوصيل النشط مع خريطة</li>
+              <li><strong>Earnings</strong> — الأرباح والإحصائيات</li>
+              <li><strong>Notifications</strong> — الإشعارات</li>
+              <li><strong>Profile</strong> — الملف الشخصي</li>
+            </ul>
+          </div>
+          <div>
+            <h4>البنية الداخلية</h4>
+            <ul class="feature-list-compact">
+              <li><strong>core/</strong> — network, realtime, storage, services, theme, localization</li>
+              <li><strong>features/</strong> — auth, home, orders, tracking, earnings, notifications, profile</li>
+              <li><strong>shared/</strong> — models, widgets</li>
+              <li><strong>config/</strong> — environment (API URLs)</li>
+              <li><strong>app/</strong> — realtime bindings, presence bindings</li>
+            </ul>
+            <h4 style="margin-top: 16px;">خدمات متقدمة</h4>
+            <ul class="feature-list-compact">
+              <li>LocationService — تتبع الموقع</li>
+              <li>AppPermissionService — إدارة الأذونات</li>
+              <li>MapLauncherService — فتح الخرائط الخارجية</li>
+              <li>NotificationService — إدارة الإشعارات</li>
+              <li>SessionStorage — تخزين آمن للجلسة</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 8: Realtime -->
+    <section id="realtime" class="section">
+      <div class="section-header">
+        <span class="section-number">08</span>
+        <h2>النظام اللحظي (Real-time)</h2>
+      </div>
+
+      <div class="card">
+        <h3>بنية Socket.IO</h3>
+        <div class="socket-diagram">
+          <div class="socket-server">
+            <h4>الخادم (Socket.IO Server)</h4>
+            <div class="socket-rooms">
+              <div class="socket-room room-admin">
+                <strong>admin_dashboard</strong>
+                <p>غرفة لوحة التحكم — تستقبل كل الأحداث</p>
+              </div>
+              <div class="socket-room room-drivers">
+                <strong>drivers_live</strong>
+                <p>غرفة السائقين المتصلين — أحداث الطلبات والإيفاد</p>
+              </div>
+              <div class="socket-room room-customer">
+                <strong>customer:{id}</strong>
+                <p>غرفة خاصة لكل عميل — تتبع طلباته</p>
+              </div>
+              <div class="socket-room room-driver">
+                <strong>driver:{id}</strong>
+                <p>غرفة خاصة لكل سائق — طلبات مخصصة</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>الأحداث الرئيسية</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>الحدث</th><th>الاتجاه</th><th>الوصف</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>new_order</code></td><td>Server → Client</td><td>طلب جديد تم إنشاؤه</td></tr>
+            <tr><td><code>order_updated</code></td><td>Server → Client</td><td>تحديث حالة الطلب</td></tr>
+            <tr><td><code>join_admin_room</code></td><td>Client → Server</td><td>الانضمام لغرفة الإدارة</td></tr>
+            <tr><td><code>join_customer_room</code></td><td>Client → Server</td><td>الانضمام لغرفة العميل</td></tr>
+            <tr><td><code>join_driver_room</code></td><td>Client → Server</td><td>الانضمام لغرفة السائق</td></tr>
+            <tr><td><code>subscribe_orders</code></td><td>Client → Server</td><td>الاشتراك في تحديثات الطلبات</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>خدمات الوقت الحقيقي</h3>
+        <div class="grid-3">
+          <div class="service-card">
+            <h4>orderRealtimeService</h4>
+            <p>بث أحداث الطلبات لجميع الأطراف المعنية (الإدارة، العميل، السائق)</p>
+          </div>
+          <div class="service-card">
+            <h4>driverDispatchService</h4>
+            <p>إيفاد السائقين تلقائياً مع استئناف العمليات المعلقة عند إعادة التشغيل</p>
+          </div>
+          <div class="service-card">
+            <h4>trackingRouteService</h4>
+            <p>حساب وإدارة مسارات التوصيل بين السائق والعميل</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 9: Deployment -->
+    <section id="deployment" class="section">
+      <div class="section-header">
+        <span class="section-number">09</span>
+        <h2>النشر والتشغيل</h2>
+      </div>
+
+      <div class="card">
+        <h3>Docker Compose (3 حاويات)</h3>
+        <div class="grid-3">
+          <div class="docker-card">
+            <div class="docker-header docker-backend">backend</div>
+            <ul>
+              <li>Image: <code>node:20-alpine</code></li>
+              <li>Container: <code>gas_backend</code></li>
+              <li>Port: <code>${PORT}</code></li>
+              <li>يعتمد على: postgres (healthy)</li>
+              <li>يشغل: Next.js + Express + Socket.IO</li>
+            </ul>
+          </div>
+          <div class="docker-card">
+            <div class="docker-header docker-db">postgres</div>
+            <ul>
+              <li>Image: <code>postgres:16-alpine</code></li>
+              <li>Container: <code>gas_postgres</code></li>
+              <li>Port: <code>5432</code></li>
+              <li>Volume: <code>postgres_data</code></li>
+              <li>Init: <code>database/init.sql</code></li>
+              <li>Healthcheck: <code>pg_isready</code></li>
+            </ul>
+          </div>
+          <div class="docker-card">
+            <div class="docker-header docker-pgadmin">pgAdmin</div>
+            <ul>
+              <li>Image: <code>dpage/pgadmin4:8.14</code></li>
+              <li>Container: <code>gas_pgadmin</code></li>
+              <li>Port: <code>${PGADMIN_PORT}:80</code></li>
+              <li>Volume: <code>pgadmin_data</code></li>
+              <li>واجهة إدارة DB رسومية</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>متغيرات البيئة (.env)</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>المتغير</th><th>القيمة الافتراضية</th><th>الوصف</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>PORT</code></td><td>3000</td><td>منفذ الخادم</td></tr>
+            <tr><td><code>DB_HOST</code></td><td>postgres</td><td>مضيف قاعدة البيانات</td></tr>
+            <tr><td><code>DB_PORT</code></td><td>5432</td><td>منفذ PostgreSQL</td></tr>
+            <tr><td><code>DB_USER</code></td><td>postgres</td><td>مستخدم قاعدة البيانات</td></tr>
+            <tr><td><code>DB_PASSWORD</code></td><td>postgres</td><td>كلمة مرور قاعدة البيانات</td></tr>
+            <tr><td><code>DB_NAME</code></td><td>gas_delivery</td><td>اسم قاعدة البيانات</td></tr>
+            <tr><td><code>PGADMIN_PORT</code></td><td>5050</td><td>منفذ pgAdmin</td></tr>
+            <tr><td><code>PGADMIN_DEFAULT_EMAIL</code></td><td>admin@omangas.com</td><td>بريد pgAdmin</td></tr>
+            <tr><td><code>PGADMIN_DEFAULT_PASSWORD</code></td><td>admin123</td><td>كلمة مرور pgAdmin</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>أوامر التشغيل</h3>
+        <div class="grid-2">
+          <div class="command-card">
+            <h4>Docker</h4>
+            <pre class="code-block">docker compose up --build</pre>
+            <p>تشغيل جميع الحاويات (Backend + DB + pgAdmin)</p>
+          </div>
+          <div class="command-card">
+            <h4>تشغيل محلي</h4>
+            <pre class="code-block">npm install
+npm run dev</pre>
+            <p>تشغيل في وضع التطوير مع Nodemon</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 10: Analysis -->
+    <section id="analysis" class="section">
+      <div class="section-header">
+        <span class="section-number">10</span>
+        <h2>التحليل والتوصيات</h2>
+      </div>
+
+      <div class="card">
+        <h3>نقاط القوة</h3>
+        <div class="analysis-grid">
+          <div class="analysis-item strength">
+            <div class="analysis-icon">+</div>
+            <div>
+              <strong>بنية مشروع منظمة</strong>
+              <p>فصل واضح بين الطبقات (Routes, Controllers, Models, Services) مما يسهل الصيانة والتوسع</p>
+            </div>
+          </div>
+          <div class="analysis-item strength">
+            <div class="analysis-icon">+</div>
+            <div>
+              <strong>دعم لحظي متكامل</strong>
+              <p>نظام Socket.IO مع غرف مخصصة لكل طرف (إدارة، عميل، سائق) وخدمة إيفاد ذكية</p>
+            </div>
+          </div>
+          <div class="analysis-item strength">
+            <div class="analysis-icon">+</div>
+            <div>
+              <strong>Docker جاهز للإنتاج</strong>
+              <p>Dockerfile مُحسّن مع multi-stage build وHealthcheck لقاعدة البيانات</p>
+            </div>
+          </div>
+          <div class="analysis-item strength">
+            <div class="analysis-icon">+</div>
+            <div>
+              <strong>ثنائية اللغة (RTL)</strong>
+              <p>دعم كامل للعربية والإنجليزية مع تبديل اتجاه الصفحة تلقائياً</p>
+            </div>
+          </div>
+          <div class="analysis-item strength">
+            <div class="analysis-icon">+</div>
+            <div>
+              <strong>تقنيات حديثة</strong>
+              <p>Next.js 15, React 19, Flutter 3.10, PostgreSQL 16 — أحدث الإصدارات المستقرة</p>
+            </div>
+          </div>
+          <div class="analysis-item strength">
+            <div class="analysis-icon">+</div>
+            <div>
+              <strong>نظام مسارات DB محسّن</strong>
+              <p>فهارس قاعدة بيانات مدروسة على الأعمدة الأكثر استعلاماً (status, driver_id, customer_id)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>نقاط تحتاج تحسين</h3>
+        <div class="analysis-grid">
+          <div class="analysis-item weakness">
+            <div class="analysis-icon">!</div>
+            <div>
+              <strong>عدم توحيد إصدار Riverpod</strong>
+              <p>تطبيق العميل يستخدم <code>flutter_riverpod ^3.0.3</code> بينما تطبيق السائق يستخدم <code>^2.6.1</code>. يجب توحيد الإصدار لتقليل التعقيد.</p>
+            </div>
+          </div>
+          <div class="analysis-item weakness">
+            <div class="analysis-icon">!</div>
+            <div>
+              <strong>غياب الاختبارات</strong>
+              <p>لا توجد اختبارات للخادم (Express/Node.js). اختبارات Flutter مقتصرة على الحد الأدنى. يُوصى بإضافة Jest/Vitest للـ API واختبارات widget/integration لـ Flutter.</p>
+            </div>
+          </div>
+          <div class="analysis-item weakness">
+            <div class="analysis-icon">!</div>
+            <div>
+              <strong>تعارض منفذ الخادم</strong>
+              <p><code>.env.example</code> يحدد PORT=3000 لكن <code>server.js</code> يستخدم 5000 كقيمة افتراضية. يجب توحيد القيمة.</p>
+            </div>
+          </div>
+          <div class="analysis-item weakness">
+            <div class="analysis-icon">!</div>
+            <div>
+              <strong>غياب Rate Limiting</strong>
+              <p>لا توجد حماية ضد هجمات إغراق الطلبات على API. يُوصى بإضافة <code>express-rate-limit</code>.</p>
+            </div>
+          </div>
+          <div class="analysis-item weakness">
+            <div class="analysis-icon">!</div>
+            <div>
+              <strong>CORS مفتوح بالكامل</strong>
+              <p>إعدادات CORS تسمح بأي مصدر (<code>origin: true</code>). يجب تقييد المصادر المسموحة في الإنتاج.</p>
+            </div>
+          </div>
+          <div class="analysis-item weakness">
+            <div class="analysis-icon">!</div>
+            <div>
+              <strong>غياب تشفير كلمات المرور</strong>
+              <p>لا توجد مكتبة <code>bcrypt</code> في التبعيات رغم وجود حقل <code>password_hash</code>. يجب التحقق من آلية التشفير.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>توصيات التطوير المستقبلي</h3>
+        <div class="recommendations">
+          <div class="rec-item">
+            <span class="rec-priority high">عالية</span>
+            <div>
+              <strong>إضافة اختبارات شاملة</strong>
+              <p>Jest للـ API، React Testing Library للواجهة، Flutter Widget Tests للتطبيقات</p>
+            </div>
+          </div>
+          <div class="rec-item">
+            <span class="rec-priority high">عالية</span>
+            <div>
+              <strong>تأمين API</strong>
+              <p>إضافة Rate Limiting, تقييد CORS, التحقق من bcrypt, إضافة JWT بشكل أفضل</p>
+            </div>
+          </div>
+          <div class="rec-item">
+            <span class="rec-priority medium">متوسطة</span>
+            <div>
+              <strong>إضافة CI/CD Pipeline</strong>
+              <p>GitHub Actions لتشغيل الاختبارات تلقائياً والنشر عبر Docker</p>
+            </div>
+          </div>
+          <div class="rec-item">
+            <span class="rec-priority medium">متوسطة</span>
+            <div>
+              <strong>إضافة إشعارات Push</strong>
+              <p>Firebase Cloud Messaging (FCM) للتطبيقات المحمولة (مذكور كـ TODO)</p>
+            </div>
+          </div>
+          <div class="rec-item">
+            <span class="rec-priority medium">متوسطة</span>
+            <div>
+              <strong>Logging و Monitoring</strong>
+              <p>إضافة Winston/Pino للسجلات المهيكلة وPromethues/Grafana للمراقبة</p>
+            </div>
+          </div>
+          <div class="rec-item">
+            <span class="rec-priority low">منخفضة</span>
+            <div>
+              <strong>توحيد إصدارات التبعيات</strong>
+              <p>توحيد Riverpod عبر تطبيقات Flutter وإنشاء workspace مشترك</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>إحصائيات المشروع</h3>
+        <div class="grid-4">
+          <div class="final-stat">
+            <div class="final-stat-value">~315</div>
+            <div class="final-stat-label">إجمالي الملفات</div>
+          </div>
+          <div class="final-stat">
+            <div class="final-stat-value">40</div>
+            <div class="final-stat-label">ملفات الخادم (src/)</div>
+          </div>
+          <div class="final-stat">
+            <div class="final-stat-value">42</div>
+            <div class="final-stat-label">ملف Dart (العميل)</div>
+          </div>
+          <div class="final-stat">
+            <div class="final-stat-value">57</div>
+            <div class="final-stat-label">ملف Dart (السائق)</div>
+          </div>
+          <div class="final-stat">
+            <div class="final-stat-value">23</div>
+            <div class="final-stat-label">مكون React</div>
+          </div>
+          <div class="final-stat">
+            <div class="final-stat-value">6</div>
+            <div class="final-stat-label">جداول قاعدة بيانات</div>
+          </div>
+          <div class="final-stat">
+            <div class="final-stat-value">11</div>
+            <div class="final-stat-label">مسار API</div>
+          </div>
+          <div class="final-stat">
+            <div class="final-stat-value">3</div>
+            <div class="final-stat-label">حاويات Docker</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>تقرير تحليلي شامل لمشروع Gas Delivery Platform — تم إنشاؤه في 6 أبريل 2026</p>
+    </div>
+  </footer>
+
+</body>
+</html>

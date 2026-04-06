@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تقرير تطبيق المستخدم</title>
+    <link rel="stylesheet" href="./customer-app-report.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero__content">
+          <p class="eyebrow">تقرير تنفيذي وتقني</p>
+          <h1>تطبيق المستخدم Customer App</h1>
+          <p class="hero__summary">
+            هذا التقرير مبني على مراجعة تطبيق المستخدم من المسار
+            <code>C:\Users\HP\AndroidStudioProjects\customer_app</code>.
+            الهدف منه توضيح ما تم إنجازه فعليًا داخل التطبيق، وما الذي تم تطبيقه في
+            الخارطة تحديدًا، وما هي الفجوات الحالية، ثم ترتيب الخطة الكاملة القادمة
+            بشكل عملي وواضح.
+          </p>
+          <div class="hero__badges">
+            <span class="badge badge--good">Flutter + Dart</span>
+            <span class="badge badge--good">Google Maps</span>
+            <span class="badge badge--good">Riverpod + Dio</span>
+            <span class="badge badge--good">Socket.IO</span>
+            <span class="badge badge--warn">التتبع الحي جزئي</span>
+            <span class="badge badge--missing">الرحلة الفعلية ما زالت ناقصة</span>
+          </div>
+        </div>
+
+        <aside class="hero__panel">
+          <div class="hero-card">
+            <p class="hero-card__label">الحكم السريع</p>
+            <p class="hero-card__value">التطبيق الأساسي موجود ويعمل</p>
+            <p class="hero-card__text">
+              التطبيق يملك تسجيل دخول وإنشاء حساب، الصفحة الرئيسية، إنشاء الطلب،
+              تتبع مبدئي على خرائط Google، قائمة الطلبات، الملف الشخصي، وربطًا فعليًا
+              مع الباكند عبر API وSocket.IO. الجزء الأقوى القادم يجب أن يكون تحويل
+              الخارطة من عرض موقع المستخدم فقط إلى تتبع طلب حقيقي مع السائق والمسار
+              ووقت الوصول.
+            </p>
+          </div>
+        </aside>
+      </header>
+
+      <main class="content">
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">ملخص الحالة</p>
+            <h2>ما الذي تم إنجازه داخل التطبيق</h2>
+            <p class="section__lead">
+              الموجود الآن ليس مجرد واجهات ثابتة؛ بل تطبيق مرتبط بالباكند ويقرأ
+              بيانات حقيقية ويخزن الجلسة ويتعامل مع الموقع والتحديثات اللحظية.
+            </p>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric-card">
+              <span class="metric-card__value">7</span>
+              <h3>شاشات رئيسية</h3>
+              <p>Splash, Auth, Home, Create Order, Orders, Profile, Tracking.</p>
+            </article>
+            <article class="metric-card">
+              <span class="metric-card__value">6</span>
+              <h3>طبقات تشغيل أساسية</h3>
+              <p>Auth, Catalog, Orders, Location, Maps, Realtime Socket.</p>
+            </article>
+            <article class="metric-card">
+              <span class="metric-card__value">5</span>
+              <h3>مكتبات محورية</h3>
+              <p>Riverpod, Dio, GoRouter, Google Maps, Geolocator.</p>
+            </article>
+            <article class="metric-card">
+              <span class="metric-card__value">2</span>
+              <h3>تكاملات مباشرة</h3>
+              <p>REST API للبيانات وSocket.IO للتحديثات الحية.</p>
+            </article>
+          </div>
+
+          <div class="status-grid">
+            <article class="status-card">
+              <div class="status-card__head">
+                <h3>منجز فعليًا</h3>
+                <span class="status-pill status-pill--good">جاهز للعمل المحلي</span>
+              </div>
+              <ul class="feature-list">
+                <li>شاشة تسجيل دخول وإنشاء حساب مرتبطة بالباكند.</li>
+                <li>إدارة جلسة المستخدم وحفظ بياناته محليًا بعد الدخول.</li>
+                <li>الصفحة الرئيسية تعرض الترحيب والمنتجات ورسالة النظام وآخر طلب.</li>
+                <li>شاشة إنشاء الطلب ترسل المنتج والكمية والعنوان والإحداثيات وطريقة الدفع.</li>
+                <li>صفحة الطلبات تعرض الطلبات مع حالات التصفية والحالة الزمنية.</li>
+                <li>صفحة الملف الشخصي تعرض بيانات العميل والعناوين واللغة والدعم.</li>
+                <li>المزامنة مع المنتجات والمناطق والإعدادات قادمة من الباكند.</li>
+                <li>التحديثات اللحظية للحالة وموقع السائق مربوطة عبر Socket.IO.</li>
+                <li>تم تحسين الاتصال على الهاتف الحقيقي مع رسائل خطأ أوضح للشبكة والمصادقة.</li>
+              </ul>
+            </article>
+
+            <article class="status-card">
+              <div class="status-card__head">
+                <h3>منجز جزئيًا</h3>
+                <span class="status-pill status-pill--warn">يحتاج إكمال</span>
+              </div>
+              <ul class="feature-list">
+                <li>التتبع موجود في شاشة مستقلة لكنه يركز الآن على موقع المستخدم الحالي.</li>
+                <li>نموذج الطلب يحمل بيانات السائق والإحداثيات لكن الواجهة لا تستثمرها كاملة بعد.</li>
+                <li>المناطق والإعدادات تُسحب من الباكند لكن لم تتحول إلى تجربة مرئية كاملة داخل الخريطة.</li>
+                <li>العناوين الحالية تعتمد كثيرًا على GPS والعنوان المشتق بدل إدارة عناوين كاملة.</li>
+              </ul>
+            </article>
+
+            <article class="status-card">
+              <div class="status-card__head">
+                <h3>غير موجود بعد</h3>
+                <span class="status-pill status-pill--missing">مهم جدًا</span>
+              </div>
+              <ul class="feature-list">
+                <li>مسار حقيقي بين السائق والعميل مع Polyline وطرق فعلية.</li>
+                <li>عرض Time ETA واضح داخل شاشة التتبع.</li>
+                <li>اختيار الموقع من خريطة تفاعلية بدل الاعتماد الأساسي على GPS والحقول.</li>
+                <li>طبقة مناطق التغطية فوق الخارطة.</li>
+                <li>تنبيهات Push وإشعارات تشغيلية حقيقية للمستخدم.</li>
+                <li>دفع إلكتروني وتدفق سداد مكتمل.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section section--accent">
+          <div class="section__header">
+            <p class="section__eyebrow">الخارطة</p>
+            <h2>ما الذي تم تطبيقه في خارطة تطبيق المستخدم</h2>
+            <p class="section__lead">
+              هذا هو الجزء الذي طلبت إبرازه بشكل واضح: ما الذي تم تنفيذه فعليًا في
+              الخريطة الآن، وما الذي ما زال ينقصها حتى تصبح خارطة تشغيلية كاملة.
+            </p>
+          </div>
+
+          <div class="map-grid">
+            <article class="map-card map-card--done">
+              <h3>المطبق الآن في الخارطة</h3>
+              <ul class="feature-list">
+                <li>تم دمج <code>google_maps_flutter</code> داخل التطبيق فعليًا.</li>
+                <li>تمت تهيئة خرائط Google على أندرويد مع warmup وrenderer initialization.</li>
+                <li>هناك مسار واضح لشاشة التتبع <code>/tracking/:orderId</code>.</li>
+                <li>شاشة التتبع تعرض خريطة حقيقية وليس مجرد Placeholder.</li>
+                <li>الخريطة تعرض Marker لموقع المستخدم الحالي.</li>
+                <li>الكاميرا تتحرك تلقائيًا إلى الموقع الحالي عند نجاح القراءة.</li>
+                <li>يتم عرض خطوط العرض والطول للموقع الحالي داخل واجهة التتبع.</li>
+                <li>يوجد Loading state ورسائل أخطاء وإعادة محاولة عند فشل تحديد الموقع.</li>
+                <li>يمكن تحديث الموقع من الصفحة الرئيسية ومن شاشة إنشاء الطلب.</li>
+                <li>العنوان يُشتق من GPS عبر <code>geocoding</code> ويُخزن كعنوان حالي.</li>
+                <li>هناك تحقق لنطاق سلطنة عمان مع fallback للمحاكي إلى موقع مسقط.</li>
+                <li>الطلب المرسل إلى الباكند يتضمن <code>latitude</code> و<code>longitude</code>.</li>
+                <li>التطبيق يقرأ تحديثات حية من <code>driver_location_updated</code>.</li>
+                <li>نموذج الطلب داخل التطبيق يدعم تخزين <code>driverLatitude</code> و<code>driverLongitude</code>.</li>
+              </ul>
+            </article>
+
+            <article class="map-card map-card--gap">
+              <h3>ما الذي لم يطبق بعد في الخارطة</h3>
+              <ul class="feature-list">
+                <li>لا يوجد Marker ظاهر للسائق داخل شاشة التتبع الحالية.</li>
+                <li>لا يوجد Marker واضح لموقع التسليم أو موقع الطلب النهائي.</li>
+                <li>لا يوجد خط مسار فعلي بين السائق والعميل.</li>
+                <li>لا يوجد <code>ETA</code> مرئي للمستخدم رغم أن طبقة البيانات بدأت تجهز له.</li>
+                <li>لا يوجد Route حقيقي من Google Directions أو Mapbox Directions.</li>
+                <li>لا يوجد اختيار موقع من الخريطة أثناء إنشاء الطلب عبر Pin أو Drag.</li>
+                <li>لا يوجد Overlay للمناطق أو التغطية أو رسوم التوصيل على الخارطة.</li>
+                <li>زر “Map Demo” ما زال يدل على أن جزءًا من التجربة ما زال تجريبيًا وليس نهائيًا.</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="timeline">
+            <article class="timeline-card">
+              <span class="timeline-card__step">1</span>
+              <div>
+                <h3>الخلاصة الصادقة عن الخارطة</h3>
+                <p>
+                  الخارطة الحالية جيدة كبداية تقنية، لأنها أثبتت التكامل مع Google Maps
+                  والموقع الحقيقي وتهيئة الخرائط والتعامل مع الأخطاء. لكن خارطة
+                  المستخدم لم تتحول بعد إلى خارطة تتبع طلب كاملة. ما نراه الآن أقرب
+                  إلى <strong>خريطة موقع المستخدم الحالي</strong> أكثر من كونه
+                  <strong>خريطة توصيل حية بين العميل والسائق</strong>.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">التقنيات</p>
+            <h2>اللغات والأدوات والمكتبات المستخدمة</h2>
+          </div>
+
+          <div class="stack-grid">
+            <article class="stack-card">
+              <h3>لغة التطوير</h3>
+              <p><code>Dart</code> هي اللغة الأساسية للتطبيق.</p>
+            </article>
+            <article class="stack-card">
+              <h3>الإطار</h3>
+              <p><code>Flutter</code> لبناء واجهات Android بتصميم موحد.</p>
+            </article>
+            <article class="stack-card">
+              <h3>إدارة الحالة</h3>
+              <p><code>flutter_riverpod</code> لإدارة الحالة والتدفق العام.</p>
+            </article>
+            <article class="stack-card">
+              <h3>التنقل</h3>
+              <p><code>go_router</code> للمسارات بين الشاشات.</p>
+            </article>
+            <article class="stack-card">
+              <h3>الاتصال بالباكند</h3>
+              <p><code>dio</code> لطلبات REST نحو API الإدارة والطلبات والإعدادات.</p>
+            </article>
+            <article class="stack-card">
+              <h3>التحديثات الحية</h3>
+              <p><code>socket_io_client</code> للاستماع لتغييرات الحالة والموقع.</p>
+            </article>
+            <article class="stack-card">
+              <h3>الخرائط</h3>
+              <p><code>google_maps_flutter</code> مع حزم أندرويد والمنصة.</p>
+            </article>
+            <article class="stack-card">
+              <h3>الموقع</h3>
+              <p><code>geolocator</code> و<code>geocoding</code> و<code>device_info_plus</code>.</p>
+            </article>
+            <article class="stack-card">
+              <h3>التخزين المحلي</h3>
+              <p><code>shared_preferences</code> لحفظ الجلسة واللغة والعنوان الحالي.</p>
+            </article>
+            <article class="stack-card">
+              <h3>الباكند المرتبط</h3>
+              <p><code>Node.js + Express + PostgreSQL + Socket.IO</code>.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__header">
+            <p class="section__eyebrow">الفجوات الحالية</p>
+            <h2>ما الذي يحتاجه التطبيق قبل أن يصبح مكتملًا</h2>
+          </div>
+
+          <div class="checklist">
+            <div class="checklist__column">
+              <h3>في تجربة المستخدم</h3>
+              <ul class="feature-list">
+                <li>إدارة عناوين أكثر اكتمالًا: إضافة وتعديل واختيار من خريطة.</li>
+                <li>شاشة تفاصيل طلب أوضح من الشاشة الحالية الخاصة بالتتبع فقط.</li>
+                <li>إشعارات لحظية مرئية داخل التطبيق وعبر Push.</li>
+                <li>إظهار التسلسل الزمني للطلب من الإنشاء حتى التسليم.</li>
+              </ul>
+            </div>
+            <div class="checklist__column">
+              <h3>في طبقة البيانات</h3>
+              <ul class="feature-list">
+                <li>تنظيف نهائي لبنية الإحداثيات بين العميل والطلب والسائق.</li>
+                <li>ربط ETA والمسار الحقيقي من الباكند أو مزود خرائط خارجي.</li>
+                <li>تحسين إدارة أخطاء الشبكة والانقطاع واسترجاع الجلسات.</li>
+                <li>إضافة اختبارات وحدات واختبارات تكامل أساسية.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="section section--accent">
+          <div class="section__header">
+            <p class="section__eyebrow">الخطة الكاملة</p>
+            <h2>خارطة تنفيذ تطبيق المستخدم من الآن حتى الاكتمال</h2>
+          </div>
+
+          <div class="roadmap">
+            <article class="roadmap-card">
+              <div class="roadmap-card__phase">المرحلة 1</div>
+              <div class="roadmap-card__status roadmap-card__status--done">
+                مكتمل
+              </div>
+              <h3>تثبيت الأساس الحالي</h3>
+              <ul class="feature-list">
+                <li>تم تنظيف بنية الموقع والإحداثيات بين التطبيق والباكند.</li>
+                <li>تم ربط شاشة التتبع بالطلب الحقيقي بدل الاعتماد على موقع المستخدم فقط.</li>
+                <li>تم تحسين شاشة إنشاء الطلب وربطها بعنوان GPS الحالي بشكل أوضح.</li>
+                <li>تم إغلاق مشاكل الشبكة والمهلات وتثبيت بيئة الهاتف الحقيقي.</li>
+              </ul>
+            </article>
+
+            <article class="roadmap-card">
+              <div class="roadmap-card__phase">المرحلة 2</div>
+              <h3>بناء خارطة المستخدم الفعلية</h3>
+              <ul class="feature-list">
+                <li>إضافة Marker لموقع العميل وموقع السائق وموقع التسليم.</li>
+                <li>إظهار Polyline لمسار الطريق الحقيقي.</li>
+                <li>إضافة ETA حي ومحدث داخل واجهة التتبع.</li>
+                <li>إظهار حالة السائق والمركبة ووقت آخر تحديث للموقع.</li>
+                <li>إضافة اختيار الموقع من خريطة تفاعلية عند إنشاء الطلب.</li>
+              </ul>
+            </article>
+
+            <article class="roadmap-card">
+              <div class="roadmap-card__phase">المرحلة 3</div>
+              <h3>إكمال رحلة الطلب للمستخدم</h3>
+              <ul class="feature-list">
+                <li>بناء شاشة تفاصيل طلب كاملة مع Timeline للحالات.</li>
+                <li>إضافة إشعارات Push للحالة، قبول الطلب، والانطلاق، والتسليم.</li>
+                <li>إضافة خيارات دفع إلكتروني إن كانت ضمن نطاق المنتج النهائي.</li>
+                <li>تحسين إدارة العناوين المحفوظة والافتراضية.</li>
+              </ul>
+            </article>
+
+            <article class="roadmap-card">
+              <div class="roadmap-card__phase">المرحلة 4</div>
+              <h3>الجاهزية للإنتاج</h3>
+              <ul class="feature-list">
+                <li>إضافة اختبارات وتحليلات وأدوات Crash Reporting.</li>
+                <li>فصل بيئات التطوير وStaging وProduction.</li>
+                <li>ضبط مفاتيح الخرائط والإعدادات السرية بشكل آمن.</li>
+                <li>مراجعة الأداء وتجهيز نسخ النشر للمتاجر.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="summary-box">
+          <h2>الخلاصة النهائية</h2>
+          <p>
+            تطبيق المستخدم اليوم يملك أساسًا جيدًا وقابلًا للتوسعة: تدفق دخول،
+            إنشاء طلب، مزامنة بيانات، موقع GPS، خريطة Google، وتحديثات لحظية من
+            الباكند. الجزء الذي يحتاج التركيز الأكبر الآن هو تحويل الخارطة من
+            تجربة أولية تعتمد على موقع المستخدم الحالي إلى تجربة تتبع حقيقية للطلب
+            نفسه مع السائق والمسار ووقت الوصول والمناطق.
+          </p>
+          <p>
+            أفضل خطوة تالية إذا أردنا التقدم بشكل صحيح هي:
+            <strong>بناء خارطة المستخدم الحقيقية المرتبطة بالطلب الحالي</strong>
+            ثم بعدها نكمل ETA والمسار والإشعارات والعناوين.
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
