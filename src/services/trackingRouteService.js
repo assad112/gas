@@ -15,9 +15,22 @@ const ROUTING_MAX_POINTS = Number.parseInt(
   process.env.ROUTING_MAX_POINTS || "72",
   10
 );
+const ROUTING_ENABLE_ALTERNATIVES =
+  String(process.env.ROUTING_ENABLE_ALTERNATIVES || "true").toLowerCase() !==
+  "false";
+const ROUTING_MAX_ALTERNATIVES = Number.parseInt(
+  process.env.ROUTING_MAX_ALTERNATIVES || "2",
+  10
+);
 const FALLBACK_SPEED_METERS_PER_SECOND = Number.parseFloat(
   process.env.ROUTING_FALLBACK_SPEED_MPS || "8.5"
 );
+const TRAFFIC_PROFILE = {
+  morning: Number.parseFloat(process.env.ROUTING_TRAFFIC_FACTOR_MORNING || "1.18"),
+  midday: Number.parseFloat(process.env.ROUTING_TRAFFIC_FACTOR_MIDDAY || "1.08"),
+  evening: Number.parseFloat(process.env.ROUTING_TRAFFIC_FACTOR_EVENING || "1.22"),
+  night: Number.parseFloat(process.env.ROUTING_TRAFFIC_FACTOR_NIGHT || "0.96")
+};
 
 const routeCache = new Map();
 
@@ -104,7 +117,8 @@ function buildTrackingPayload({
   distanceMeters,
   durationSeconds,
   provider,
-  isFallback = false
+  isFallback = false,
+  alternatives = []
 }) {
   const normalizedPoints = trimRoutePoints(normalizeRoutePoints(points));
   const safeDistanceMeters = Math.max(
@@ -115,7 +129,12 @@ function buildTrackingPayload({
     0,
     Math.round(toFiniteNumber(durationSeconds) || 0)
   );
-  const etaMinutes = Math.max(1, Math.ceil(safeDurationSeconds / 60));
+  const trafficProfile = resolveTrafficProfile();
+  const trafficAdjustedSeconds = Math.max(
+    safeDurationSeconds,
+    Math.round(safeDurationSeconds * trafficProfile.factor)
+  );
+  const etaMinutes = Math.max(1, Math.ceil(trafficAdjustedSeconds / 60));
 
   const route = {
     points: normalizedPoints.map((point) => ({
@@ -126,9 +145,30 @@ function buildTrackingPayload({
     })),
     distanceMeters: safeDistanceMeters,
     durationSeconds: safeDurationSeconds,
+    trafficAdjustedSeconds,
     etaMinutes,
     provider,
     isFallback,
+    trafficFactor: trafficProfile.factor,
+    trafficBucket: trafficProfile.bucket,
+    alternatives: alternatives.map((alternative) => ({
+      points: trimRoutePoints(normalizeRoutePoints(alternative.points)).map(
+        (point) => ({
+          latitude: point.latitude,
+          longitude: point.longitude,
+          lat: point.latitude,
+          lng: point.longitude
+        })
+      ),
+      distanceMeters: Math.max(
+        0,
+        Math.round(toFiniteNumber(alternative.distanceMeters) || 0)
+      ),
+      durationSeconds: Math.max(
+        0,
+        Math.round(toFiniteNumber(alternative.durationSeconds) || 0)
+      )
+    })),
     computedAt: new Date().toISOString()
   };
 
@@ -139,6 +179,8 @@ function buildTrackingPayload({
     route_distance_meters: route.distanceMeters,
     routeDurationSeconds: route.durationSeconds,
     route_duration_seconds: route.durationSeconds,
+    routeTrafficAdjustedSeconds: route.trafficAdjustedSeconds,
+    route_traffic_adjusted_seconds: route.trafficAdjustedSeconds,
     etaMinutes: route.etaMinutes,
     eta_minutes: route.etaMinutes,
     trackingRoute: route,
@@ -174,6 +216,16 @@ function toPublicRouteResponse(trackingPayload) {
       ) || 0
     )
   );
+  const trafficAdjustedSeconds = Math.max(
+    durationSeconds,
+    Math.round(
+      toFiniteNumber(
+        trackingPayload?.routeTrafficAdjustedSeconds ??
+          trackingPayload?.route_traffic_adjusted_seconds ??
+          trackingRoute.trafficAdjustedSeconds
+      ) || durationSeconds
+    )
+  );
   const etaMinutes = Math.max(
     1,
     Math.ceil(
@@ -182,7 +234,7 @@ function toPublicRouteResponse(trackingPayload) {
           trackingPayload?.eta_minutes ??
           trackingRoute.etaMinutes
       ) ||
-        durationSeconds / 60 ||
+        trafficAdjustedSeconds / 60 ||
         1
     )
   );
@@ -197,7 +249,28 @@ function toPublicRouteResponse(trackingPayload) {
     distanceKm: Number((distanceMeters / 1000).toFixed(2)),
     duration: durationSeconds,
     durationSeconds,
+    trafficAdjustedSeconds,
     etaMinutes,
+    trafficFactor: toFiniteNumber(trackingRoute.trafficFactor) || 1,
+    trafficBucket: trackingRoute.trafficBucket || null,
+    alternatives: Array.isArray(trackingRoute.alternatives)
+      ? trackingRoute.alternatives.map((alternative) => ({
+          distanceMeters: Math.max(
+            0,
+            Math.round(toFiniteNumber(alternative.distanceMeters) || 0)
+          ),
+          durationSeconds: Math.max(
+            0,
+            Math.round(toFiniteNumber(alternative.durationSeconds) || 0)
+          ),
+          points: normalizeRoutePoints(alternative.points).map((point) => ({
+            latitude: point.latitude,
+            longitude: point.longitude,
+            lat: point.latitude,
+            lng: point.longitude
+          }))
+        }))
+      : [],
     geometry: {
       type: "LineString",
       coordinates: normalizedPoints.map((point) => [
@@ -212,6 +285,24 @@ function toPublicRouteResponse(trackingPayload) {
       lng: point.longitude
     }))
   };
+}
+
+function resolveTrafficProfile(now = new Date()) {
+  const hour = now.getHours();
+
+  if (hour >= 6 && hour < 10) {
+    return { factor: TRAFFIC_PROFILE.morning, bucket: "morning_peak" };
+  }
+
+  if (hour >= 10 && hour < 16) {
+    return { factor: TRAFFIC_PROFILE.midday, bucket: "midday" };
+  }
+
+  if (hour >= 16 && hour < 21) {
+    return { factor: TRAFFIC_PROFILE.evening, bucket: "evening_peak" };
+  }
+
+  return { factor: TRAFFIC_PROFILE.night, bucket: "night" };
 }
 
 function buildFallbackTracking(origin, destination) {
@@ -235,7 +326,7 @@ async function fetchRouteFromOsrm(origin, destination) {
   const response = await axios.get(requestUrl, {
     timeout: ROUTING_REQUEST_TIMEOUT_MS,
     params: {
-      alternatives: false,
+      alternatives: ROUTING_ENABLE_ALTERNATIVES,
       steps: false,
       overview: "full",
       geometries: "geojson"
@@ -243,6 +334,21 @@ async function fetchRouteFromOsrm(origin, destination) {
   });
 
   const route = response.data?.routes?.[0];
+  const alternativeRoutes = Array.isArray(response.data?.routes)
+    ? response.data.routes
+        .slice(1, 1 + ROUTING_MAX_ALTERNATIVES)
+        .map((alternativeRoute) => ({
+          points: Array.isArray(alternativeRoute?.geometry?.coordinates)
+            ? alternativeRoute.geometry.coordinates.map((coordinate) => ({
+                latitude: coordinate[1],
+                longitude: coordinate[0]
+              }))
+            : [],
+          distanceMeters: alternativeRoute?.distance,
+          durationSeconds: alternativeRoute?.duration
+        }))
+        .filter((alternative) => alternative.points.length > 1)
+    : [];
   const coordinates = route?.geometry?.coordinates;
 
   if (!route || !Array.isArray(coordinates) || coordinates.length < 2) {
@@ -256,7 +362,8 @@ async function fetchRouteFromOsrm(origin, destination) {
     })),
     distanceMeters: route.distance,
     durationSeconds: route.duration,
-    provider: "osrm"
+    provider: "osrm",
+    alternatives: alternativeRoutes
   });
 }
 
@@ -373,5 +480,6 @@ module.exports = {
   enrichOrdersTracking,
   getRouteBetweenCoordinates,
   normalizeLatLngPoint,
-  toPublicRouteResponse
+  toPublicRouteResponse,
+  resolveTrafficProfile
 };

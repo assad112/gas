@@ -153,11 +153,7 @@ function initializeSocket(server) {
     const isCustomerSocket = await joinCustomerRoom(socket, handshakeSource);
 
     if (!isCustomerSocket) {
-      const isDriverSocket = await joinDriverRooms(socket, handshakeSource);
-
-      if (!isDriverSocket) {
-        joinAdminRoom(socket);
-      }
+      await joinDriverRooms(socket, handshakeSource);
     }
 
     socket.on("join_admin_room", () => {

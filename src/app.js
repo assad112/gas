@@ -11,9 +11,12 @@ const customerRoutes = require("./routes/customerRoutes");
 const driverRoutes = require("./routes/driverRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const routeRoutes = require("./routes/routeRoutes");
+const mapRoutes = require("./routes/mapRoutes");
+const errorLogRoutes = require("./routes/errorLogRoutes");
 const productRoutes = require("./routes/productRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
 const zoneRoutes = require("./routes/zoneRoutes");
+const captureErrorResponses = require("./middleware/captureErrorResponses");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
 
@@ -28,6 +31,7 @@ function createApp(nextHandler) {
   );
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(captureErrorResponses);
 
   app.get("/api/health", (_req, res) => {
     res.status(200).json({ status: "ok" });
@@ -38,6 +42,8 @@ function createApp(nextHandler) {
   app.use("/api/driver", driverAppRoutes);
   app.use("/api/orders", orderRoutes);
   app.use("/api/routes", routeRoutes);
+  app.use("/api/maps", mapRoutes);
+  app.use("/api/errors", errorLogRoutes);
   app.use("/api/drivers", driverRoutes);
   app.use("/api/customers", customerRoutes);
   app.use("/api/settings", settingsRoutes);

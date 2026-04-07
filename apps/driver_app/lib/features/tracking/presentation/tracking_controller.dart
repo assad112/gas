@@ -55,6 +55,8 @@ class TrackingController extends Notifier<TrackingState> {
   DateTime? _lastSentAt;
   bool _isSendingLocation = false;
   Position? _queuedPosition;
+  int _consecutiveFailures = 0;
+  DateTime? _nextRetryAt;
   bool _isDisposed = false;
   int _sharingSessionId = 0;
 
@@ -144,6 +146,8 @@ class TrackingController extends Notifier<TrackingState> {
     _lastSentAt = null;
     _queuedPosition = null;
     _isSendingLocation = false;
+    _consecutiveFailures = 0;
+    _nextRetryAt = null;
 
     if (_isDisposed) {
       return;
@@ -169,6 +173,13 @@ class TrackingController extends Notifier<TrackingState> {
       return;
     }
 
+    if (!force &&
+        _nextRetryAt != null &&
+        DateTime.now().isBefore(_nextRetryAt!)) {
+      _queuedPosition = position;
+      return;
+    }
+
     if (_isSendingLocation) {
       _queuedPosition = position;
       return;
@@ -182,10 +193,23 @@ class TrackingController extends Notifier<TrackingState> {
       }
       _lastSentPosition = position;
       _lastSentAt = DateTime.now();
+      _consecutiveFailures = 0;
+      _nextRetryAt = null;
     } catch (error) {
       if (!_isSessionActive(sessionId)) {
         return;
       }
+      _consecutiveFailures += 1;
+      final retryDelaySeconds = switch (_consecutiveFailures) {
+        <= 1 => 4,
+        2 => 8,
+        3 => 15,
+        _ => 30,
+      };
+      _nextRetryAt = DateTime.now().add(
+        Duration(seconds: retryDelaySeconds),
+      );
+      _queuedPosition = position;
       state = state.copyWith(errorMessage: error.toString());
     } finally {
       _isSendingLocation = false;
@@ -214,6 +238,10 @@ class TrackingController extends Notifier<TrackingState> {
   }
 
   bool _shouldSendPosition(Position position) {
+    if (position.accuracy > 120) {
+      return false;
+    }
+
     final lastSentPosition = _lastSentPosition;
     final lastSentAt = _lastSentAt;
 
@@ -232,7 +260,24 @@ class TrackingController extends Notifier<TrackingState> {
         .difference(lastSentAt)
         .inSeconds;
 
-    return distanceMeters >= 25 || secondsSinceLastPush >= 15;
+    final speedMps = position.speed.isFinite && position.speed > 0
+        ? position.speed
+        : 0.0;
+    final minDistanceMeters = switch (speedMps) {
+      >= 8 => 40.0,
+      >= 4 => 28.0,
+      >= 1.5 => 18.0,
+      _ => 8.0,
+    };
+    final heartbeatSeconds = switch (speedMps) {
+      >= 8 => 8,
+      >= 4 => 10,
+      >= 1.5 => 14,
+      _ => 30,
+    };
+
+    return distanceMeters >= minDistanceMeters ||
+        secondsSinceLastPush >= heartbeatSeconds;
   }
 
   Future<void> _pushPosition(Position position) {
@@ -241,6 +286,9 @@ class TrackingController extends Notifier<TrackingState> {
         .updateDriverLocation(
           latitude: position.latitude,
           longitude: position.longitude,
+          accuracyMeters: position.accuracy,
+          speedMps: position.speed,
+          headingDegrees: position.heading,
           orderId: state.activeOrderId,
         );
   }

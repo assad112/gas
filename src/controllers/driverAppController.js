@@ -15,6 +15,10 @@ const {
   enrichOrderTracking,
   enrichOrdersTracking
 } = require("../services/trackingRouteService");
+const {
+  createLocationHistoryEntry,
+  evaluateRouteDeviation
+} = require("../services/mapOperationsService");
 const { validateCoordinatePair } = require("../utils/coordinates");
 
 const ADMIN_ROOM = "admin_dashboard";
@@ -268,6 +272,13 @@ async function updateLocation(req, res, next) {
     const currentLocation = toNullableString(
       req.body.currentLocation ?? req.body.current_location
     );
+    const accuracy = toNullableNumber(
+      req.body.accuracy ?? req.body.accuracyMeters ?? req.body.accuracy_meters
+    );
+    const speed = toNullableNumber(req.body.speed ?? req.body.speedMps);
+    const heading = toNullableNumber(
+      req.body.heading ?? req.body.headingDegrees ?? req.body.heading_degrees
+    );
     const requestedOrderId = req.body.orderId ??
       req.body.order_id ??
       req.body.currentOrderId ??
@@ -303,6 +314,18 @@ async function updateLocation(req, res, next) {
       driverId,
       requestedOrderId
     );
+    const trackedOrderId = trackedOrder ? Number(trackedOrder.id) : null;
+
+    await createLocationHistoryEntry({
+      driverId,
+      orderId: trackedOrderId,
+      latitude,
+      longitude,
+      accuracy,
+      speed,
+      heading,
+      source: "driver_app"
+    });
 
     emitDriverUpdated(req.app.get("io"), updatedDriver, "driver_location_updated");
 
@@ -311,6 +334,18 @@ async function updateLocation(req, res, next) {
     }
 
     if (trackedOrder) {
+      await evaluateRouteDeviation(
+        {
+          ...trackedOrder,
+          driverLatitude: latitude,
+          driverLongitude: longitude
+        },
+        {
+          id: String(driverId),
+          currentLatitude: latitude,
+          currentLongitude: longitude
+        }
+      );
       await emitOrderTrackingUpdate(req.app.get("io"), trackedOrder);
     }
 

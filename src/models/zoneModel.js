@@ -1,4 +1,33 @@
 const db = require("../config/db");
+const {
+  computeCentroid,
+  parsePolygonInput,
+  polygonToGeoJson,
+  toFiniteNumber
+} = require("../utils/geometry");
+
+function serializeZone(row) {
+  if (!row) {
+    return null;
+  }
+
+  const polygon = parsePolygonInput(row.polygon);
+  const centerLatitude = toFiniteNumber(
+    row.center_latitude ?? row.centerLatitude
+  );
+  const centerLongitude = toFiniteNumber(
+    row.center_longitude ?? row.centerLongitude
+  );
+  const computedCenter = polygon ? computeCentroid(polygon) : null;
+
+  return {
+    ...row,
+    polygon,
+    polygon_geojson: polygon ? polygonToGeoJson(polygon) : null,
+    center_latitude: centerLatitude ?? computedCenter?.latitude ?? null,
+    center_longitude: centerLongitude ?? computedCenter?.longitude ?? null
+  };
+}
 
 async function getAllZones() {
   const result = await db.query(
@@ -9,7 +38,7 @@ async function getAllZones() {
     `
   );
 
-  return result.rows;
+  return result.rows.map(serializeZone);
 }
 
 async function getZoneById(id) {
@@ -23,7 +52,7 @@ async function getZoneById(id) {
     [id]
   );
 
-  return result.rows[0] || null;
+  return serializeZone(result.rows[0] || null);
 }
 
 async function updateZone(id, changes = {}) {
@@ -37,6 +66,9 @@ async function updateZone(id, changes = {}) {
     deliveryFee: "delivery_fee",
     estimatedDeliveryMinutes: "estimated_delivery_minutes",
     isActive: "is_active",
+    polygon: "polygon",
+    centerLatitude: "center_latitude",
+    centerLongitude: "center_longitude",
     operationalNotes: "operational_notes"
   };
 
@@ -45,7 +77,11 @@ async function updateZone(id, changes = {}) {
       return;
     }
 
-    values.push(changes[inputKey]);
+    values.push(
+      inputKey === "polygon"
+        ? JSON.stringify(parsePolygonInput(changes[inputKey]))
+        : changes[inputKey]
+    );
     updates.push(`${columnName} = $${values.length}`);
   });
 
@@ -65,7 +101,7 @@ async function updateZone(id, changes = {}) {
     values
   );
 
-  return result.rows[0] || null;
+  return serializeZone(result.rows[0] || null);
 }
 
 async function deleteZone(id) {
@@ -78,7 +114,7 @@ async function deleteZone(id) {
     [id]
   );
 
-  return result.rows[0] || null;
+  return serializeZone(result.rows[0] || null);
 }
 
 module.exports = {

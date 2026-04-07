@@ -95,12 +95,18 @@ class OrdersRepository {
     required double longitude,
     String? orderId,
     String? currentLocation,
+    double? accuracyMeters,
+    double? speedMps,
+    double? headingDegrees,
   }) async {
     await _dio.patch(
       '/driver/location',
       data: {
         'latitude': latitude,
         'longitude': longitude,
+        if (accuracyMeters != null) 'accuracyMeters': accuracyMeters,
+        if (speedMps != null) 'speedMps': speedMps,
+        if (headingDegrees != null) 'headingDegrees': headingDegrees,
         if (orderId != null && orderId.isNotEmpty) ...{
           'orderId': orderId,
           'currentOrderId': orderId,

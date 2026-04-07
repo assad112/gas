@@ -6,3 +6,4 @@ node_modules
 **/*.iml
 apps/driver_app/.vscode/
 apps/customer_app/build/
+logs/

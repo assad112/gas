@@ -228,9 +228,63 @@ const createDeliveryZonesTableQuery = `
     delivery_fee NUMERIC(10,3) NOT NULL DEFAULT 1.250,
     estimated_delivery_minutes INTEGER NOT NULL DEFAULT 30,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    polygon JSONB,
+    center_latitude DOUBLE PRECISION,
+    center_longitude DOUBLE PRECISION,
     operational_notes TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
+  );
+`;
+
+const createDriverLocationHistoryTableQuery = `
+  CREATE TABLE IF NOT EXISTS driver_location_history (
+    id SERIAL PRIMARY KEY,
+    driver_id INTEGER NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
+    order_id INTEGER REFERENCES orders(id) ON DELETE SET NULL,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    accuracy_meters DOUBLE PRECISION,
+    speed_mps DOUBLE PRECISION,
+    heading_degrees DOUBLE PRECISION,
+    source TEXT NOT NULL DEFAULT 'driver_app',
+    created_at TIMESTAMP DEFAULT NOW()
+  );
+`;
+
+const createMapAlertsTableQuery = `
+  CREATE TABLE IF NOT EXISTS map_alerts (
+    id SERIAL PRIMARY KEY,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    alert_type TEXT NOT NULL,
+    severity TEXT NOT NULL DEFAULT 'medium',
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    metadata JSONB,
+    status TEXT NOT NULL DEFAULT 'open',
+    created_at TIMESTAMP DEFAULT NOW(),
+    resolved_at TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT NOW()
+  );
+`;
+
+const createErrorLogsTableQuery = `
+  CREATE TABLE IF NOT EXISTS error_logs (
+    id SERIAL PRIMARY KEY,
+    level TEXT NOT NULL DEFAULT 'error',
+    source TEXT NOT NULL DEFAULT 'http',
+    error_name TEXT NOT NULL DEFAULT 'Error',
+    message TEXT NOT NULL,
+    stack_trace TEXT,
+    status_code INTEGER,
+    request_id TEXT,
+    method TEXT,
+    path TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    metadata JSONB,
+    created_at TIMESTAMP DEFAULT NOW()
   );
 `;
 
@@ -392,6 +446,21 @@ const alterOrdersTableQueries = [
   `
 ];
 
+const alterDeliveryZonesQueries = [
+  `
+    ALTER TABLE delivery_zones
+    ADD COLUMN IF NOT EXISTS polygon JSONB;
+  `,
+  `
+    ALTER TABLE delivery_zones
+    ADD COLUMN IF NOT EXISTS center_latitude DOUBLE PRECISION;
+  `,
+  `
+    ALTER TABLE delivery_zones
+    ADD COLUMN IF NOT EXISTS center_longitude DOUBLE PRECISION;
+  `
+];
+
 const createCustomerSessionIndexQuery = `
   CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_session_token
   ON customers (session_token)
@@ -449,6 +518,36 @@ const createDriverUsernameIndexQuery = `
 const createDriverOrderRejectionsIndexQuery = `
   CREATE UNIQUE INDEX IF NOT EXISTS idx_driver_order_rejections_driver_order
   ON driver_order_rejections (driver_id, order_id);
+`;
+
+const createDriverLocationHistoryDriverIndexQuery = `
+  CREATE INDEX IF NOT EXISTS idx_driver_location_history_driver_created
+  ON driver_location_history (driver_id, created_at DESC);
+`;
+
+const createDriverLocationHistoryOrderIndexQuery = `
+  CREATE INDEX IF NOT EXISTS idx_driver_location_history_order_created
+  ON driver_location_history (order_id, created_at DESC);
+`;
+
+const createMapAlertsEntityIndexQuery = `
+  CREATE INDEX IF NOT EXISTS idx_map_alerts_entity_status
+  ON map_alerts (entity_type, entity_id, status, updated_at DESC);
+`;
+
+const createMapAlertsOpenUniqueIndexQuery = `
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_map_alerts_open_unique
+  ON map_alerts (entity_type, entity_id, alert_type, status);
+`;
+
+const createErrorLogsCreatedAtIndexQuery = `
+  CREATE INDEX IF NOT EXISTS idx_error_logs_created_at
+  ON error_logs (created_at DESC);
+`;
+
+const createErrorLogsLevelSourceIndexQuery = `
+  CREATE INDEX IF NOT EXISTS idx_error_logs_level_source
+  ON error_logs (level, source, created_at DESC);
 `;
 
 const seedSystemSettingsQuery = `
@@ -605,12 +704,19 @@ async function initializeDatabase(retries = 15, delayMs = 3000) {
       await client.query(createSystemSettingsTableQuery);
       await client.query(createGasProductsTableQuery);
       await client.query(createDeliveryZonesTableQuery);
+      await client.query(createDriverLocationHistoryTableQuery);
+      await client.query(createMapAlertsTableQuery);
+      await client.query(createErrorLogsTableQuery);
 
       for (const queryText of alterDriversTableQueries) {
         await client.query(queryText);
       }
 
       for (const queryText of alterOrdersTableQueries) {
+        await client.query(queryText);
+      }
+
+      for (const queryText of alterDeliveryZonesQueries) {
         await client.query(queryText);
       }
 
@@ -625,6 +731,12 @@ async function initializeDatabase(retries = 15, delayMs = 3000) {
       await client.query(createDriverEmailIndexQuery);
       await client.query(createDriverUsernameIndexQuery);
       await client.query(createDriverOrderRejectionsIndexQuery);
+      await client.query(createDriverLocationHistoryDriverIndexQuery);
+      await client.query(createDriverLocationHistoryOrderIndexQuery);
+      await client.query(createMapAlertsEntityIndexQuery);
+      await client.query(createMapAlertsOpenUniqueIndexQuery);
+      await client.query(createErrorLogsCreatedAtIndexQuery);
+      await client.query(createErrorLogsLevelSourceIndexQuery);
 
       await client.query(seedSystemSettingsQuery);
       await client.query(seedGasProductsQuery);

@@ -37,12 +37,25 @@ export default function Topbar({ onOpenSidebar }) {
     useOrders();
 
   const pageKey = pathname.replace("/", "") || "dashboard";
+  const pageMetaByLocale = {
+    ...(pageMetaFallback[locale] || {}),
+    errors:
+      locale === "en"
+        ? {
+            title: "Errors",
+            subtitle: "Operational error log and system failure tracking"
+          }
+        : {
+            title: "الأخطاء",
+            subtitle: "سجل الأخطاء التشغيلي وتتبع أعطال النظام"
+          }
+  };
   const resolvedMeta =
     t(`pageMeta.${pageKey}`) === `pageMeta.${pageKey}`
-      ? pageMetaFallback[locale]?.[pageKey]
+      ? pageMetaByLocale[pageKey]
       : t(`pageMeta.${pageKey}`);
   const pageMeta =
-    resolvedMeta || t("pageMeta.dashboard") || pageMetaFallback[locale].dashboard;
+    resolvedMeta || t("pageMeta.dashboard") || pageMetaByLocale.dashboard;
 
   return (
     <header className="panel-surface sticky top-3 z-20 overflow-hidden p-4 lg:p-5">

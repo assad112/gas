@@ -1,4 +1,5 @@
 const zoneModel = require("../models/zoneModel");
+const { computeCentroid, parsePolygonInput } = require("../utils/geometry");
 
 function emitZoneUpdated(io, zone) {
   if (!io || !zone) {
@@ -38,6 +39,40 @@ async function updateZone(req, res, next) {
       });
     }
 
+    const payload = { ...(req.body || {}) };
+
+    if (
+      Object.prototype.hasOwnProperty.call(payload, "polygon") ||
+      Object.prototype.hasOwnProperty.call(payload, "polygon_geojson") ||
+      Object.prototype.hasOwnProperty.call(payload, "polygonGeoJson")
+    ) {
+      const normalizedPolygon = parsePolygonInput(
+        payload.polygon ?? payload.polygon_geojson ?? payload.polygonGeoJson
+      );
+
+      if (!normalizedPolygon) {
+        return res.status(400).json({
+          message: "Valid zone polygon coordinates are required."
+        });
+      }
+
+      payload.polygon = normalizedPolygon;
+
+      if (
+        !Object.prototype.hasOwnProperty.call(payload, "centerLatitude") &&
+        !Object.prototype.hasOwnProperty.call(payload, "center_latitude")
+      ) {
+        payload.centerLatitude = computeCentroid(normalizedPolygon)?.latitude;
+      }
+
+      if (
+        !Object.prototype.hasOwnProperty.call(payload, "centerLongitude") &&
+        !Object.prototype.hasOwnProperty.call(payload, "center_longitude")
+      ) {
+        payload.centerLongitude = computeCentroid(normalizedPolygon)?.longitude;
+      }
+    }
+
     const existingZone = await zoneModel.getZoneById(zoneId);
 
     if (!existingZone) {
@@ -46,7 +81,7 @@ async function updateZone(req, res, next) {
       });
     }
 
-    const zone = await zoneModel.updateZone(zoneId, req.body || {});
+    const zone = await zoneModel.updateZone(zoneId, payload);
     emitZoneUpdated(req.app.get("io"), zone);
     return res.status(200).json(zone);
   } catch (error) {

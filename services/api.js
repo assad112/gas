@@ -183,6 +183,24 @@ function normalizeZone(zone) {
     return null;
   }
 
+  const polygonSource =
+    zone.polygon ||
+    zone.polygon_geojson?.coordinates?.[0] ||
+    zone.polygonGeoJson?.coordinates?.[0] ||
+    [];
+  const polygon = Array.isArray(polygonSource)
+    ? polygonSource
+        .map((point) => ({
+          latitude: toLatitude(point?.latitude ?? point?.lat ?? point?.[1]),
+          longitude: toLongitude(
+            point?.longitude ?? point?.lng ?? point?.lon ?? point?.[0]
+          )
+        }))
+        .filter(
+          (point) => point.latitude !== null && point.longitude !== null
+        )
+    : [];
+
   return {
     id: Number(zone.id),
     code: zone.code || "",
@@ -192,9 +210,47 @@ function normalizeZone(zone) {
     deliveryFee: toNumber(zone.delivery_fee) ?? 0,
     estimatedDeliveryMinutes: Number(zone.estimated_delivery_minutes || 0),
     isActive: toBoolean(zone.is_active),
+    polygon,
+    polygonGeoJson:
+      zone.polygon_geojson ||
+      (polygon.length >= 3
+        ? {
+            type: "Polygon",
+            coordinates: [polygon.map((point) => [point.longitude, point.latitude])]
+          }
+        : null),
+    centerLatitude: toLatitude(
+      zone.centerLatitude ?? zone.center_latitude ?? zone.center?.latitude
+    ),
+    centerLongitude: toLongitude(
+      zone.centerLongitude ?? zone.center_longitude ?? zone.center?.longitude
+    ),
     operationalNotes: zone.operational_notes || "",
     createdAt: zone.created_at || null,
     updatedAt: zone.updated_at || null
+  };
+}
+
+function normalizeErrorLog(log) {
+  if (!log) {
+    return null;
+  }
+
+  return {
+    id: Number(log.id),
+    level: log.level || "error",
+    source: log.source || "http",
+    errorName: log.errorName || log.error_name || "Error",
+    message: log.message || "",
+    stackTrace: log.stackTrace || log.stack_trace || "",
+    statusCode: toNumber(log.statusCode ?? log.status_code),
+    requestId: log.requestId || log.request_id || "",
+    method: log.method || "",
+    path: log.path || "",
+    ipAddress: log.ipAddress || log.ip_address || "",
+    userAgent: log.userAgent || log.user_agent || "",
+    metadata: log.metadata || null,
+    createdAt: log.createdAt || log.created_at || null
   };
 }
 
@@ -409,6 +465,11 @@ export async function fetchZonesRequest() {
   return response.data.map(normalizeZone);
 }
 
+export async function fetchMapRouteRequest(params = {}) {
+  const response = await api.get("/routes", { params });
+  return response.data;
+}
+
 export async function updateZoneRequest(zoneId, payload) {
   const response = await api.patch(`/zones/${zoneId}`, payload);
   return normalizeZone(response.data);
@@ -422,12 +483,52 @@ export async function deleteZoneRequest(zoneId) {
   };
 }
 
+export async function fetchMapAnalyticsRequest() {
+  const response = await api.get("/maps/analytics");
+  return response.data;
+}
+
+export async function fetchDriverTrailRequest(params = {}) {
+  const response = await api.get("/maps/trail", { params });
+  return Array.isArray(response.data) ? response.data : [];
+}
+
+export async function geocodeSearchRequest(query, limit = 6) {
+  const response = await api.get("/maps/geocode", {
+    params: { query, limit }
+  });
+  return response.data?.results || [];
+}
+
+export async function reverseGeocodeRequest(latitude, longitude) {
+  const response = await api.get("/maps/reverse", {
+    params: { latitude, longitude }
+  });
+  return response.data || null;
+}
+
+export async function fetchErrorLogsRequest(params = {}) {
+  const response = await api.get("/errors", { params });
+  return {
+    logs: Array.isArray(response.data?.logs)
+      ? response.data.logs.map(normalizeErrorLog).filter(Boolean)
+      : [],
+    summary: response.data?.summary || null
+  };
+}
+
+export async function fetchErrorLogRequest(errorLogId) {
+  const response = await api.get(`/errors/${errorLogId}`);
+  return normalizeErrorLog(response.data);
+}
+
 export {
   normalizeOrder,
   normalizeDriver,
   normalizeCustomer,
   normalizeSettings,
   normalizeProduct,
-  normalizeZone
+  normalizeZone,
+  normalizeErrorLog
 };
 export default api;

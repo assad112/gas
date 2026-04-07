@@ -4,6 +4,7 @@ import { Cairo, Plus_Jakarta_Sans } from "next/font/google";
 import AppProviders from "@/components/providers/app-providers";
 
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
