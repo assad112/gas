@@ -3,10 +3,12 @@
 import {
   AlertTriangle,
   Bug,
+  MonitorSmartphone,
   RefreshCcw,
   Search,
   ServerCrash,
-  ShieldAlert
+  ShieldAlert,
+  Truck
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -61,9 +63,39 @@ function levelTone(level) {
 }
 
 function sourceTone(source) {
-  return source === "process" || source === "startup"
-    ? "border-slate-300 bg-slate-100 text-slate-800"
-    : "border-ocean-200 bg-ocean-50 text-ocean-800";
+  if (source === "process" || source === "startup") {
+    return "border-slate-300 bg-slate-100 text-slate-800";
+  }
+
+  if (source === "client" || source === "socket") {
+    return "border-violet-200 bg-violet-50 text-violet-800";
+  }
+
+  return "border-ocean-200 bg-ocean-50 text-ocean-800";
+}
+
+function appTone(appSource) {
+  if (appSource === "customer_app") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  }
+
+  if (appSource === "driver_app") {
+    return "border-amber-200 bg-amber-50 text-amber-800";
+  }
+
+  return "border-slate-200 bg-slate-50 text-slate-700";
+}
+
+function getAppLabel(appSource, locale) {
+  if (appSource === "customer_app") {
+    return locale === "en" ? "Customer app" : "تطبيق المستخدم";
+  }
+
+  if (appSource === "driver_app") {
+    return locale === "en" ? "Driver app" : "تطبيق السائق";
+  }
+
+  return locale === "en" ? "Backend / dashboard" : "الباكيند / الداشبورد";
 }
 
 function DetailRow({ label, value, mono = false }) {
@@ -89,6 +121,7 @@ export default function ErrorsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
+  const [appSourceFilter, setAppSourceFilter] = useState("all");
   const [expandedLogId, setExpandedLogId] = useState(null);
 
   async function loadLogs({ silent = false } = {}) {
@@ -103,6 +136,7 @@ export default function ErrorsPage() {
         limit: 80,
         ...(levelFilter !== "all" ? { level: levelFilter } : {}),
         ...(sourceFilter !== "all" ? { source: sourceFilter } : {}),
+        ...(appSourceFilter !== "all" ? { appSource: appSourceFilter } : {}),
         ...(searchTerm.trim() ? { search: searchTerm.trim() } : {})
       });
 
@@ -126,7 +160,9 @@ export default function ErrorsPage() {
       errors: logs.filter((log) => log.level === "error").length,
       warnings: logs.filter((log) => log.level === "warn").length,
       process: logs.filter((log) => log.source === "process").length,
-      http: logs.filter((log) => log.source === "http").length
+      http: logs.filter((log) => log.source === "http").length,
+      customerApp: logs.filter((log) => log.appSource === "customer_app").length,
+      driverApp: logs.filter((log) => log.appSource === "driver_app").length
     }),
     [logs]
   );
@@ -192,7 +228,7 @@ export default function ErrorsPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <SummaryCard
           icon={Bug}
           title={locale === "en" ? "Total logs" : "إجمالي السجلات"}
@@ -216,31 +252,42 @@ export default function ErrorsPage() {
           tone="amber"
         />
         <SummaryCard
+          icon={MonitorSmartphone}
+          title={locale === "en" ? "Customer app" : "تطبيق المستخدم"}
+          value={formatNumber(summary?.customerAppCount || filteredCounts.customerApp, locale)}
+          subtitle={
+            locale === "en"
+              ? "Errors reported by the customer mobile app."
+              : "الأخطاء الواردة من تطبيق المستخدم."
+          }
+          tone="ocean"
+        />
+        <SummaryCard
+          icon={Truck}
+          title={locale === "en" ? "Driver app" : "تطبيق السائق"}
+          value={formatNumber(summary?.driverAppCount || filteredCounts.driverApp, locale)}
+          subtitle={
+            locale === "en"
+              ? "Errors reported by the driver mobile app."
+              : "الأخطاء الواردة من تطبيق السائق."
+          }
+          tone="amber"
+        />
+        <SummaryCard
           icon={ServerCrash}
-          title={locale === "en" ? "Server errors" : "أخطاء الخادم"}
+          title={locale === "en" ? "Backend errors" : "أخطاء الباكيند"}
           value={formatNumber(summary?.errorCount || filteredCounts.errors, locale)}
           subtitle={
             locale === "en"
-              ? `${formatNumber(summary?.processCount || filteredCounts.process, locale)} process-level incidents.`
-              : `${formatNumber(summary?.processCount || filteredCounts.process, locale)} حوادث على مستوى العملية.`
-          }
-          tone="rose"
-        />
-        <SummaryCard
-          icon={Search}
-          title={locale === "en" ? "HTTP issues" : "مشاكل HTTP"}
-          value={formatNumber(summary?.httpCount || filteredCounts.http, locale)}
-          subtitle={
-            locale === "en"
-              ? `${formatNumber(summary?.warnCount || filteredCounts.warnings, locale)} warnings captured.`
-              : `${formatNumber(summary?.warnCount || filteredCounts.warnings, locale)} تحذيرات مسجلة.`
+              ? `${formatNumber(summary?.processCount || filteredCounts.process, locale)} process incidents and ${formatNumber(summary?.httpCount || filteredCounts.http, locale)} HTTP issues.`
+              : `${formatNumber(summary?.processCount || filteredCounts.process, locale)} حوادث عملية و${formatNumber(summary?.httpCount || filteredCounts.http, locale)} مشاكل HTTP.`
           }
           tone="ocean"
         />
       </section>
 
       <section className="panel-surface p-5 sm:p-6">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto]">
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_180px_180px_180px_auto]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -272,8 +319,21 @@ export default function ErrorsPage() {
           >
             <option value="all">{locale === "en" ? "All sources" : "كل المصادر"}</option>
             <option value="http">HTTP</option>
+            <option value="client">{locale === "en" ? "Client" : "التطبيق"}</option>
+            <option value="socket">Socket</option>
             <option value="process">{locale === "en" ? "Process" : "العملية"}</option>
             <option value="startup">{locale === "en" ? "Startup" : "الإقلاع"}</option>
+          </select>
+
+          <select
+            className="select-premium"
+            value={appSourceFilter}
+            onChange={(event) => setAppSourceFilter(event.target.value)}
+          >
+            <option value="all">{locale === "en" ? "All apps" : "كل التطبيقات"}</option>
+            <option value="customer_app">{locale === "en" ? "Customer app" : "تطبيق المستخدم"}</option>
+            <option value="driver_app">{locale === "en" ? "Driver app" : "تطبيق السائق"}</option>
+            <option value="backend">{locale === "en" ? "Backend / dashboard" : "الباكيند / الداشبورد"}</option>
           </select>
 
           <button type="button" onClick={() => loadLogs({ silent: true })} className="button-primary">
@@ -313,6 +373,14 @@ export default function ErrorsPage() {
                       <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${sourceTone(log.source)}`}>
                         {log.source}
                       </span>
+                      <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${appTone(log.appSource)}`}>
+                        {getAppLabel(log.appSource, locale)}
+                      </span>
+                      {log.clientChannel ? (
+                        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                          {log.clientChannel}
+                        </span>
+                      ) : null}
                       {log.statusCode ? (
                         <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
                           HTTP {log.statusCode}
@@ -349,6 +417,22 @@ export default function ErrorsPage() {
 
                 {isExpanded ? (
                   <div className="mt-5 space-y-3">
+                    <DetailRow
+                      label={locale === "en" ? "Application" : "التطبيق"}
+                      value={getAppLabel(log.appSource, locale)}
+                    />
+                    <DetailRow
+                      label={locale === "en" ? "Channel" : "القناة"}
+                      value={log.clientChannel}
+                    />
+                    <DetailRow
+                      label={locale === "en" ? "Platform" : "المنصة"}
+                      value={log.clientPlatform}
+                    />
+                    <DetailRow
+                      label={locale === "en" ? "Version" : "الإصدار"}
+                      value={log.clientVersion}
+                    />
                     <DetailRow label="Path" value={log.path} mono />
                     <DetailRow label="Method" value={log.method} />
                     <DetailRow label="Request ID" value={log.requestId} mono />

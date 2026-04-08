@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:customer_app/core/monitoring/app_error_reporter.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,14 +12,29 @@ final apiClientProvider = Provider<Dio>((ref) {
       baseUrl: defaultApiBaseUrl,
       connectTimeout: const Duration(seconds: 5),
       receiveTimeout: const Duration(seconds: 12),
-      headers: const {
+      headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        ...AppErrorReporter.instance.buildHeaders(channel: 'api'),
       },
     ),
   );
 
   dio.interceptors.add(_ConnectionFailoverInterceptor(dio));
+  dio.interceptors.add(
+    InterceptorsWrapper(
+      onRequest: (options, handler) {
+        options.headers.addAll(
+          AppErrorReporter.instance.buildHeaders(channel: 'api'),
+        );
+        handler.next(options);
+      },
+      onResponse: (response, handler) {
+        unawaited(AppErrorReporter.instance.flushPendingReports());
+        handler.next(response);
+      },
+    ),
+  );
   return dio;
 });
 
@@ -31,6 +49,7 @@ class _ConnectionFailoverInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     if (!_shouldRetry(error)) {
+      unawaited(AppErrorReporter.instance.captureApiFailure(error));
       handler.next(error);
       return;
     }
@@ -61,6 +80,7 @@ class _ConnectionFailoverInterceptor extends Interceptor {
           ),
         );
 
+        unawaited(AppErrorReporter.instance.flushPendingReports());
         handler.resolve(response);
         return;
       } on DioException catch (nextError) {
@@ -68,6 +88,7 @@ class _ConnectionFailoverInterceptor extends Interceptor {
       }
     }
 
+    unawaited(AppErrorReporter.instance.captureApiFailure(latestError));
     handler.next(latestError);
   }
 

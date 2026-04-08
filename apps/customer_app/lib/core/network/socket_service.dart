@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:customer_app/core/monitoring/app_error_reporter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -23,6 +26,7 @@ class SocketService {
   SocketPayloadHandler? _onZoneUpdated;
   SocketPayloadHandler? _onSettingsUpdated;
   SocketPayloadHandler? _onNotification;
+  bool _hasReportedConnectionFailure = false;
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -90,14 +94,23 @@ class SocketService {
             if (authToken != null && authToken.isNotEmpty) 'token': authToken,
           })
           .setExtraHeaders({
+            ...AppErrorReporter.instance.buildHeaders(channel: 'socket'),
             if (authToken != null && authToken.isNotEmpty)
               'Authorization': 'Bearer $authToken',
           })
           .build(),
     );
 
-    _socket?.on('connect', (_) => _announceSubscriptions());
-    _socket?.on('reconnect', (_) => _announceSubscriptions());
+    _socket?.on('connect', (_) {
+      _hasReportedConnectionFailure = false;
+      _announceSubscriptions();
+      unawaited(AppErrorReporter.instance.flushPendingReports());
+    });
+    _socket?.on('reconnect', (_) {
+      _hasReportedConnectionFailure = false;
+      _announceSubscriptions();
+      unawaited(AppErrorReporter.instance.flushPendingReports());
+    });
     _socket?.on('connect_error', _handleConnectionFailure);
   }
 
@@ -192,6 +205,20 @@ class SocketService {
     }
 
     if (_activeBaseUrlIndex + 1 >= _candidateBaseUrls.length) {
+      if (!_hasReportedConnectionFailure) {
+        _hasReportedConnectionFailure = true;
+        unawaited(
+          AppErrorReporter.instance.captureSocketFailure(
+            'Customer socket connection failed.',
+            endpoint: _candidateBaseUrls[_activeBaseUrlIndex],
+            metadata: {
+              'customerId': _customerId,
+              'candidateBaseUrls': _candidateBaseUrls,
+              'activeBaseUrlIndex': _activeBaseUrlIndex,
+            },
+          ),
+        );
+      }
       return;
     }
 

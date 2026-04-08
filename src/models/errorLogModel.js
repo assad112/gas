@@ -3,6 +3,10 @@ const db = require("../config/db");
 async function createErrorLog({
   level,
   source,
+  appSource,
+  clientChannel = null,
+  clientPlatform = null,
+  clientVersion = null,
   errorName,
   message,
   stackTrace = null,
@@ -19,6 +23,10 @@ async function createErrorLog({
       INSERT INTO error_logs (
         level,
         source,
+        app_source,
+        client_channel,
+        client_platform,
+        client_version,
         error_name,
         message,
         stack_trace,
@@ -43,7 +51,11 @@ async function createErrorLog({
         $9,
         $10,
         $11,
-        $12::jsonb,
+        $12,
+        $13,
+        $14,
+        $15,
+        $16::jsonb,
         NOW()
       )
       RETURNING *;
@@ -51,6 +63,10 @@ async function createErrorLog({
     [
       level,
       source,
+      appSource,
+      clientChannel,
+      clientPlatform,
+      clientVersion,
       errorName,
       message,
       stackTrace,
@@ -71,6 +87,7 @@ async function listErrorLogs({
   search = null,
   level = null,
   source = null,
+  appSource = null,
   limit = 50,
   offset = 0
 } = {}) {
@@ -87,6 +104,8 @@ async function listErrorLogs({
         OR COALESCE(method, '') ILIKE ${placeholder}
         OR COALESCE(error_name, '') ILIKE ${placeholder}
         OR COALESCE(request_id, '') ILIKE ${placeholder}
+        OR COALESCE(app_source, '') ILIKE ${placeholder}
+        OR COALESCE(client_channel, '') ILIKE ${placeholder}
       )`
     );
   }
@@ -99,6 +118,11 @@ async function listErrorLogs({
   if (source) {
     params.push(source);
     conditions.push(`source = $${params.length}`);
+  }
+
+  if (appSource) {
+    params.push(appSource);
+    conditions.push(`app_source = $${params.length}`);
   }
 
   params.push(limit);
@@ -145,6 +169,8 @@ async function getErrorLogSummary() {
         COUNT(*) FILTER (WHERE level = 'warn')::INTEGER AS warn_count,
         COUNT(*) FILTER (WHERE source = 'http')::INTEGER AS http_count,
         COUNT(*) FILTER (WHERE source = 'process')::INTEGER AS process_count,
+        COUNT(*) FILTER (WHERE app_source = 'customer_app')::INTEGER AS customer_app_count,
+        COUNT(*) FILTER (WHERE app_source = 'driver_app')::INTEGER AS driver_app_count,
         MAX(created_at) AS latest_at
       FROM error_logs;
     `
@@ -158,6 +184,8 @@ async function getErrorLogSummary() {
       warn_count: 0,
       http_count: 0,
       process_count: 0,
+      customer_app_count: 0,
+      driver_app_count: 0,
       latest_at: null
     }
   );

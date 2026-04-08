@@ -274,6 +274,10 @@ const createErrorLogsTableQuery = `
     id SERIAL PRIMARY KEY,
     level TEXT NOT NULL DEFAULT 'error',
     source TEXT NOT NULL DEFAULT 'http',
+    app_source TEXT NOT NULL DEFAULT 'backend',
+    client_channel TEXT,
+    client_platform TEXT,
+    client_version TEXT,
     error_name TEXT NOT NULL DEFAULT 'Error',
     message TEXT NOT NULL,
     stack_trace TEXT,
@@ -287,6 +291,25 @@ const createErrorLogsTableQuery = `
     created_at TIMESTAMP DEFAULT NOW()
   );
 `;
+
+const alterErrorLogsTableQueries = [
+  `
+    ALTER TABLE error_logs
+    ADD COLUMN IF NOT EXISTS app_source TEXT NOT NULL DEFAULT 'backend';
+  `,
+  `
+    ALTER TABLE error_logs
+    ADD COLUMN IF NOT EXISTS client_channel TEXT;
+  `,
+  `
+    ALTER TABLE error_logs
+    ADD COLUMN IF NOT EXISTS client_platform TEXT;
+  `,
+  `
+    ALTER TABLE error_logs
+    ADD COLUMN IF NOT EXISTS client_version TEXT;
+  `
+];
 
 const alterOrdersTableQueries = [
   `
@@ -550,6 +573,11 @@ const createErrorLogsLevelSourceIndexQuery = `
   ON error_logs (level, source, created_at DESC);
 `;
 
+const createErrorLogsAppSourceIndexQuery = `
+  CREATE INDEX IF NOT EXISTS idx_error_logs_app_source
+  ON error_logs (app_source, client_channel, created_at DESC);
+`;
+
 const seedSystemSettingsQuery = `
   INSERT INTO system_settings (
     id,
@@ -720,6 +748,10 @@ async function initializeDatabase(retries = 15, delayMs = 3000) {
         await client.query(queryText);
       }
 
+      for (const queryText of alterErrorLogsTableQueries) {
+        await client.query(queryText);
+      }
+
       await client.query(createCustomerSessionIndexQuery);
       await client.query(createOrderCustomerIndexQuery);
       await client.query(createOrderStatusIndexQuery);
@@ -737,6 +769,7 @@ async function initializeDatabase(retries = 15, delayMs = 3000) {
       await client.query(createMapAlertsOpenUniqueIndexQuery);
       await client.query(createErrorLogsCreatedAtIndexQuery);
       await client.query(createErrorLogsLevelSourceIndexQuery);
+      await client.query(createErrorLogsAppSourceIndexQuery);
 
       await client.query(seedSystemSettingsQuery);
       await client.query(seedGasProductsQuery);
